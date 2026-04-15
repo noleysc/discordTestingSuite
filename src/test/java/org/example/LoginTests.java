@@ -7,7 +7,7 @@ import org.openqa.selenium.support.ui.*;
 import org.testng.annotations.*;
 import java.time.Duration;
 
-public class loginTests { // All your code MUST be inside these main brackets
+public class LoginTests { // All your code MUST be inside these main brackets
     WebDriver driver;
     WebDriverWait wait;
 

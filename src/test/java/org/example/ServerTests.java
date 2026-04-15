@@ -11,7 +11,7 @@ import java.util.Random;
  * Senior Lead Architect Infrastructure Suite
  * Optimized for High-Density 2026 Environments
  */
-public class serverTests extends baseTest {
+public class ServerTests extends BaseTest {
     private final Random random = new Random();
     private String serverName;
     private final String pfpPath = System.getProperty("user.dir") + "/logo.png";
