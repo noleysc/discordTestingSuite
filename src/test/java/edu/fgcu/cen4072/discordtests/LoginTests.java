@@ -1,4 +1,4 @@
-package org.example; // This must be the very first line [cite: 83]
+package edu.fgcu.cen4072.discordtests; // This must be the very first line [cite: 83]
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.ExpectedConditions;

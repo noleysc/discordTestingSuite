@@ -1,4 +1,4 @@
-package org.example;
+package edu.fgcu.cen4072.discordtests;
 
 import java.io.IOException;
 import java.io.InputStream;

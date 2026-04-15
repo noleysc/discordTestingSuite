@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="Discord Testing Suite">
-    <test name="Nolan Core Tests">
+    <test name="Login Tests">
         <classes>
-            <class name="org.example.NolanTests"/>
+            <class name="edu.fgcu.cen4072.discordtests.LoginTests"/>
         </classes>
     </test>
-
-    <test name="Chris Social Tests">
-        <classes>
-            <class name="org.example.ChrisTests"/>
-        </classes>
-    </test>
-
 </suite>

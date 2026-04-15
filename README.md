@@ -39,10 +39,14 @@ discordTestingSuite/
 │       │   └── org/example/
 │       └── resources/
 │           ├── config.example.properties
-│           └── config.properties   # local only, ignored by Git
+│           └── config.properties
 ├── pom.xml
 └── testng.xml
 ```
+
+Note:
+- `config.properties` is local-only and ignored by Git
+- `config.example.properties` is the template for setup
 
 ---
 
@@ -119,14 +123,14 @@ To ensure stability and progress:
 
 ---
 
-## Package Naming
+## Package Structure
 
-Planned package structure:
-```
+Current package structure:
+```text
 edu.fgcu.cen4072.discordtests
 ```
 
-(Currently using `org.example`, will be updated during refactor)
+All test classes and supporting utilities are organized under this package.
 
 ---
 
@@ -204,6 +208,7 @@ Work should be done in feature branches and merged when stable.
 - LoginTests refactored to use BaseTest
 - Test execution verified (5/5 passing)
 - Environment confirmed working
+- Package structure refactored to `edu.fgcu.cen4072.discordtests`
 
 ---
 

@@ -1,4 +1,4 @@
-package org.example;
+package edu.fgcu.cen4072.discordtests;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
