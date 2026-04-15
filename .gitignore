@@ -34,3 +34,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Local test credentials/config (do not commit real values)
+src/test/resources/config.properties

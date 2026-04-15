@@ -9,41 +9,43 @@ import org.testng.annotations.Test;
  */
 public class LoginTests extends BaseTest {
 
+    private static final String LOGIN_URL = ConfigReader.get("discord.loginUrl");
+    private static final String EMAIL = ConfigReader.get("discord.email");
+    private static final String PASSWORD = ConfigReader.get("discord.password");
+
     @Test
     public void testValidLogin() {
-        driver.get("https://discord.com/login");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email")))
-                .sendKeys("discord.testing.fgcu@gmail.com");
-        driver.findElement(By.name("password")).sendKeys("DiscordTest123!");
+        driver.get(LOGIN_URL);
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email"))).sendKeys(EMAIL);
+        driver.findElement(By.name("password")).sendKeys(PASSWORD);
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@type='submit']"))).click();
     }
 
     @Test
     public void testInvalidPassword() {
-        driver.get("https://discord.com/login");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email")))
-                .sendKeys("discord.testing.fgcu@gmail.com");
+        driver.get(LOGIN_URL);
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email"))).sendKeys(EMAIL);
         driver.findElement(By.name("password")).sendKeys("wrongPass");
         driver.findElement(By.xpath("//button[@type='submit']")).click();
     }
 
     @Test
     public void testEmptyFields() {
-        driver.get("https://discord.com/login");
+        driver.get(LOGIN_URL);
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@type='submit']"))).click();
     }
 
     @Test
     public void testRegisterNavigation() {
-        driver.get("https://discord.com/login");
-        wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//*[contains(text(), 'Register')]"))).click();
+        driver.get(LOGIN_URL);
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(text(), 'Register')]"))).click();
     }
 
     @Test
     public void testForgotPasswordLink() {
-        driver.get("https://discord.com/login");
+        driver.get(LOGIN_URL);
         wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//*[contains(translate(text(), 'FORGOT', 'forgot'), 'forgot')]"))).click();
+                By.xpath("//*[contains(translate(text(), 'FORGOT', 'forgot'), 'forgot')]")))
+                .click();
     }
 }

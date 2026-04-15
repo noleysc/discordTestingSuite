@@ -34,10 +34,14 @@ To ensure consistency between team members, use the following setup:
 discordTestingSuite/
 ├── src/
 │   ├── main/java/
-│   └── test/java/
-│       └── org/example/
+│   └── test/
+│       ├── java/
+│       │   └── org/example/
+│       └── resources/
+│           ├── config.example.properties
+│           └── config.properties   # local only, ignored by Git
 ├── pom.xml
-├── testng.xml
+└── testng.xml
 ```
 
 ---
@@ -62,6 +66,14 @@ Handles authentication-related test cases:
 - Empty input fields
 - Navigation to register page
 - Navigation to forgot password
+
+---
+
+### ConfigReader
+Loads local test configuration values from `src/test/resources/config.properties`.
+
+This is used to keep test credentials and environment-specific values out of the Java source code and out of Git.
+
 
 ---
 
@@ -103,6 +115,7 @@ To ensure stability and progress:
 - Keep code **self-documenting**
 - Add comments only when necessary
 - Avoid duplication by using shared base classes
+- Do not hardcode credentials or environment-specific values in test classes
 
 ---
 
@@ -137,6 +150,7 @@ Discord presents several automation challenges:
 - Possible rate limiting
 - Bot detection behaviors
 - Frequent UI updates
+- Cross-platform differences may affect test behavior (Windows vs. macOS), especially for browser behavior, file paths, and keyboard interactions
 
 To address this:
 - Use explicit waits (WebDriverWait)
@@ -146,14 +160,31 @@ To address this:
 
 ---
 
-## Credentials (Temporary)
+## Local Configuration
 
-Currently using a test account:
+Test credentials are no longer hardcoded in the Java test classes.
 
-- Email: discord.testing.fgcu@gmail.com
-- Username: fgcu_test_user
+Local configuration is stored in:
 
-⚠️ NOTE: These are temporary and will be moved to a configuration-based approach soon.
+```text
+src/test/resources/config.properties
+```
+
+⚠️ NOTE: This `config.properties` file is ignored by Git and should **not** be committed.
+
+A safe template file is included in the repository:
+```text
+src/test/resources/config.example.properties
+```
+Each teammate should copy the example file, create their own config.properties, and fill in their local test account values.
+
+Current config keys:
+```text
+discord.email=your-test-email@example.com
+discord.password=your-test-password
+discord.loginUrl=https://discord.com/login
+```
+
 
 ---
 
@@ -178,7 +209,8 @@ Work should be done in feature branches and merged when stable.
 
 ## Next Steps
 
-- Move credentials to config (remove hardcoding)
+- Update remaining test classes to use shared architecture and local config where appropriate
+- Refactor and stabilize `ServerTests` locators and inherited behavior
 - Refactor remaining classes to use BaseTest
 - Implement remaining test classes
 - Configure testng.xml for full suite execution
