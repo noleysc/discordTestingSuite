@@ -1,9 +1,7 @@
 package edu.fgcu.cen4072.discordtests;
 
-import io.qameta.allure.Attachment;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
@@ -59,24 +57,31 @@ public class BaseTest {
         FirefoxOptions options = new FirefoxOptions();
         
         // Use the explicit binary path provided by the user
-        // Note: Selenium usually needs the .exe, but we'll try to point to the standard install if the link is just a shortcut
         String firefoxPath = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
         options.setBinary(firefoxPath);
         
-        // Use a stable profile for persistent session
+        // 1. Clear session cache to force fresh authentication
         String testProfilePath = System.getProperty("user.dir") + "\\AutomationProfile\\Firefox_Main_Session";
         File profileDir = new File(testProfilePath);
+        if (profileDir.exists()) {
+            logger.info("Clearing previous session cache at: {}", testProfilePath);
+            try {
+                org.apache.commons.io.FileUtils.deleteDirectory(profileDir);
+            } catch (Exception e) {
+                logger.warn("Could not fully delete directory, attempting to clear specific session files...");
+            }
+        }
         if (!profileDir.exists()) profileDir.mkdirs();
         
         options.addArguments("-profile", testProfilePath);
         options.addArguments("-no-remote");
         
-        // Disable all permission prompts
-        options.addPreference("permissions.default.desktop-notification", 2);
-        options.addPreference("permissions.default.camera", 2);
-        options.addPreference("permissions.default.microphone", 2);
-        options.addPreference("permissions.default.geo", 2);
-        options.addPreference("privacy.popups.showBrowserMessage", false);
+        // 2. Set virtual media permissions
+        options.addPreference("permissions.default.desktop-notification", 1);
+        options.addPreference("permissions.default.camera", 1);
+        options.addPreference("permissions.default.microphone", 1);
+        options.addPreference("media.navigator.permission.disabled", true);
+        options.addPreference("media.navigator.streams.fake", true);
         options.addPreference("dom.webdriver.enabled", false);
         options.addPreference("useAutomationExtension", false);
         
@@ -123,10 +128,5 @@ public class BaseTest {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-    }
-
-    @Attachment(value = "Page screenshot", type = "image/png")
-    public byte[] saveScreenshot(WebDriver driver) {
-        return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
     }
 }
