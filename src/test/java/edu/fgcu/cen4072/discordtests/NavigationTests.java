@@ -6,48 +6,51 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * NavigationTests covers basic page navigation and route-level UI checks
- * for Discord's public-facing authentication pages.
+ * NavigationTests
+ *
+ * Tests navigation within Discord after login.
+ * Assumes user is already authenticated via AuthenticatedBaseTest.
  */
-public class NavigationTests extends BaseTest {
+public class NavigationTests extends AuthenticatedBaseTest {
 
-    private static final String LOGIN_URL = ConfigReader.get("discord.loginUrl");
+    @Test (priority=1)
+    public void testHomePageLoadsAfterLogin() {
+        pause(4000);
+        wait.until(ExpectedConditions.urlContains("/channels/@me"));
+        Assert.assertTrue(driver.getCurrentUrl().contains("/channels/@me"));
+    }
 
-    @Test
-    public void testLoginPageLoads() {
-        driver.get(LOGIN_URL);
-        Assert.assertTrue(driver.getCurrentUrl().contains("/login"));
+    @Test (priority=2)
+    public void testShopNavigation() {
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[text()='Shop']")));
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//div[text()='Shop']"))).click();
+        pause(4000);
+        wait.until(ExpectedConditions.urlContains("/shop"));
+        Assert.assertTrue(driver.getCurrentUrl().contains("/shop"));
+    }
+
+    @Test (priority=3)
+    public void testQuestsNavigation() {
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[text()='Quests']")));
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//div[text()='Quests']"))).click();
+        pause(4000);
+        wait.until(ExpectedConditions.urlContains("/quest"));
+        Assert.assertTrue(driver.getCurrentUrl().contains("/quest"));
     }
 
     @Test
-    public void testLoginPageTitleIsPresent() {
-        driver.get(LOGIN_URL);
-        Assert.assertFalse(driver.getTitle().isBlank());
+    public void testDiscoveryApplicationsNavigation() {
+        driver.get("https://discord.com/discovery/applications");
+        pause(4000);
+        wait.until(ExpectedConditions.urlContains("/discovery/applications"));
+        Assert.assertTrue(driver.getCurrentUrl().contains("/discovery/applications"));
     }
 
     @Test
-    public void testRegisterLinkNavigatesToSignup() {
-        driver.get(LOGIN_URL);
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(text(), 'Register')]"))).click();
-        wait.until(ExpectedConditions.urlContains("/register"));
-        Assert.assertTrue(driver.getCurrentUrl().contains("/register"));
-    }
-
-    @Test
-    public void testRegisterPageLogInButtonNavigatesToLogin() {
-        driver.get("https://discord.com/register");
-        wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//button[.//span[contains(text(), 'Already have an account? Log in')]]")))
-                .click();
-        wait.until(ExpectedConditions.urlContains("/login"));
-        Assert.assertTrue(driver.getCurrentUrl().contains("/login"));
-    }
-    @Test
-    public void testLoginFieldsArePresent() {
-        driver.get(LOGIN_URL);
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email")));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("password")));
-        Assert.assertTrue(driver.findElement(By.name("email")).isDisplayed());
-        Assert.assertTrue(driver.findElement(By.name("password")).isDisplayed());
+    public void testDiscoveryServersNavigation() {
+        driver.get("https://discord.com/discovery/servers");
+        pause(4000);
+        wait.until(ExpectedConditions.urlContains("/discovery/servers"));
+        Assert.assertTrue(driver.getCurrentUrl().contains("/discovery/servers"));
     }
 }
