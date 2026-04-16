@@ -17,8 +17,8 @@ public class NavigationTests extends BaseTest {
 
     @org.testng.annotations.BeforeMethod
     public void methodDelay() {
-        logger.info("Waiting 5 seconds before navigation test...");
-        simulateThinking(5000, 5500);
+        logger.info("Waiting 1 second before navigation test...");
+        simulateThinking(1000, 1500);
     }
 
     @Test
