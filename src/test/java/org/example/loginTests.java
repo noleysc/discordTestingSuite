@@ -1,61 +1,29 @@
-package org.example; // This must be the very first line [cite: 83]
+package org.example;
 
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.*;
-import org.testng.annotations.*;
-import java.time.Duration;
+import io.qameta.allure.*;
+import org.example.pages.landingPage;
+import org.example.pages.loginPage;
+import org.testng.annotations.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class loginTests { // All your code MUST be inside these main brackets
-    WebDriver driver;
-    WebDriverWait wait;
+@Epic("Authentication")
+@Feature("Login functionality")
+public class loginTests extends baseTest {
+    private final String loginIdentifier = "softwaretesting@tutamail.com";
+    private final String loginPassword = "testPASS!@#";
 
-    @BeforeMethod
-    public void setup() {
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--incognito");
-        options.addArguments("--disable-blink-features=AutomationControlled");
+    @Test(description = "User should be able to login successfully via landing page")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Verify that a user can navigate from the landing page to the login page and authenticate successfully.")
+    public void testSuccessfulLogin() {
+        landingPage landing = new landingPage(getDriver());
+        landing.goTo();
 
-        driver = new ChromeDriver(options); // Uses Selenium WebDriver [cite: 72]
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10)); // Addresses dynamic elements [cite: 10, 49]
-        driver.get("https://discord.com/login");
+        loginPage login = landing.clickLogin();
+        login.login(loginIdentifier, loginPassword);
+
+        assertThat(login.isDashboardLoaded())
+                .as("Discord dashboard should be loaded after login")
+                .isTrue();
     }
-
-    @Test
-    public void testValidLogin() {
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email"))).sendKeys("nstilwell863@gmail.com");
-        driver.findElement(By.name("password")).sendKeys("testPassword!@#");
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@type='submit']"))).click();
-    }
-
-    @Test
-    public void testInvalidPassword() {
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email"))).sendKeys("nstilwell863@gmail.com");
-        driver.findElement(By.name("password")).sendKeys("wrongPass");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
-    }
-
-    @Test
-    public void testEmptyFields() {
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@type='submit']"))).click();
-    }
-
-    @Test
-    public void testRegisterNavigation() {
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(text(), 'Register')]"))).click();
-    }
-
-    @Test
-    public void testForgotPasswordLink() {
-        // Broad search to handle automation constraints [cite: 10]
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(translate(text(), 'FORGOT', 'forgot'), 'forgot')]"))).click();
-    }
-
-    @AfterMethod
-    public void teardown() {
-        if (driver != null) {
-            driver.quit(); // Cleanly closes execution [cite: 30, 64]
-        }
-    }
-} // Final bracket closes the class
+}

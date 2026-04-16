@@ -1,16 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-<suite name="Discord Testing Suite">
-    <test name="Nolan Core Tests">
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="Modern Discord Test Suite" parallel="classes" thread-count="2">
+    <test name="E2E Tests">
         <classes>
-            <class name="org.example.NolanTests"/>
+            <class name="org.example.loginTests" />
+            <class name="org.example.PostAuthChromeTests" />
+            <class name="org.example.ServerTests" />
         </classes>
     </test>
-
-    <test name="Chris Social Tests">
-        <classes>
-            <class name="org.example.ChrisTests"/>
-        </classes>
-    </test>
-
 </suite>
