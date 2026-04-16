@@ -4,6 +4,9 @@
         <classes>
             <class name="org.example.loginTests" />
             <class name="org.example.ServerTests" />
+            <class name="org.example.MessagingTests" />
+            <class name="org.example.SocialTests" />
+            <class name="org.example.UserSettingsTests" />
             <class name="org.example.PostAuthChromeTests" />
         </classes>
     </test>

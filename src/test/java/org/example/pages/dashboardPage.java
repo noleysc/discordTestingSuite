@@ -191,7 +191,8 @@ public class dashboardPage extends basePage {
                 "return Array.from(document.querySelectorAll('button, [role=\"button\"], div[class*=\"container\"]'))" +
                 ".find(el => el.textContent.toLowerCase().includes('for me and my friends') || " +
                 "            el.textContent.toLowerCase().includes('for a club') || " +
-                "            el.textContent.toLowerCase().includes('skip this question'));"
+                "            el.textContent.toLowerCase().includes('skip this question') || " +
+                "            el.textContent.toLowerCase().includes('create my own'));"
             );
             if (audience != null) break;
             simulateThinking(500, 1000);
@@ -389,6 +390,222 @@ public class dashboardPage extends basePage {
         }
     }
 
+    public void selectServer(String name) {
+        logger.info("Selecting server: {}", name);
+        WebElement server = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "const nameArg = arguments[0].toLowerCase();" +
+            "return Array.from(document.querySelectorAll('[aria-label]'))" +
+            ".find(el => el.getAttribute('aria-label').toLowerCase().includes(nameArg));" ,
+            name
+        );
+        if (server == null) throw new NoSuchElementException("Server icon not found: " + name);
+        clickHumanly(server);
+        simulateThinking(1000, 2000);
+    }
+
+    public void selectChannel(String name) {
+        logger.info("Selecting channel: {}", name);
+        WebElement channel = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "const nameArg = arguments[0].toLowerCase();" +
+            "return Array.from(document.querySelectorAll('[class*=\"channelName\"]'))" +
+            ".find(el => el.textContent.toLowerCase().includes(nameArg) && el.offsetParent !== null);" ,
+            name
+        );
+        if (channel == null) {
+            // Try searching by aria-label
+            channel = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                "const nameArg = arguments[0].toLowerCase();" +
+                "return Array.from(document.querySelectorAll('[aria-label*=\"' + nameArg + '\"]'))" +
+                ".find(el => el.offsetParent !== null);" ,
+                name
+            );
+        }
+        if (channel == null) throw new NoSuchElementException("Channel not found: " + name);
+        clickHumanly(channel);
+        simulateThinking(1000, 2000);
+    }
+
+    public void sendMessage(String text) {
+        logger.info("Sending message: {}", text);
+        WebElement chatBox = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "return document.querySelector('[role=\"textbox\"][aria-label*=\"Message\"]') || " +
+            "       document.querySelector('div[class*=\"slateTextArea\"]') || " +
+            "       document.querySelector('[class*=\"textArea\"] [role=\"textbox\"]');"
+        );
+        
+        if (chatBox == null) throw new NoSuchElementException("Chat input box not found.");
+        
+        clickHumanly(chatBox);
+        typeHumanly(chatBox, text);
+        chatBox.sendKeys(Keys.ENTER);
+        simulateThinking(1000, 2000);
+    }
+
+    public String getLastMessageText() {
+        return (String) ((JavascriptExecutor) driver).executeScript(
+            "const messages = document.querySelectorAll('[class*=\"messageContent\"]');" +
+            "return messages.length > 0 ? messages[messages.length - 1].innerText : null;"
+        );
+    }
+
+    public void editLastMessage(String newText) {
+        logger.info("Editing last message to: {}", newText);
+        // Strategy: Press Up Arrow to edit last message
+        WebElement chatBox = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "return document.querySelector('[role=\"textbox\"][aria-label*=\"Message\"]') || " +
+            "       document.querySelector('div[class*=\"slateTextArea\"]');"
+        );
+        if (chatBox != null) {
+            clickHumanly(chatBox);
+            chatBox.sendKeys(Keys.ARROW_UP);
+            simulateThinking(1000, 1500);
+            
+            WebElement editInput = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                "return document.querySelector('div[class*=\"inner\"] [role=\"textbox\"]');"
+            );
+            if (editInput != null) {
+                Keys modifier = getModifierKey();
+                editInput.sendKeys(Keys.chord(modifier, "a"), Keys.BACK_SPACE);
+                typeHumanly(editInput, newText);
+                editInput.sendKeys(Keys.ENTER);
+                simulateThinking(1000, 2000);
+            }
+        }
+    }
+
+    public void deleteLastMessage() {
+        logger.info("Deleting last message...");
+        ((JavascriptExecutor) driver).executeScript(
+            "const messages = document.querySelectorAll('[class*=\"messageContent\"]');" +
+            "if (messages.length > 0) {" +
+            "  const lastMsg = messages[messages.length - 1];" +
+            "  const container = lastMsg.closest('[class*=\"message_\"]');" +
+            "  if (container) {" +
+            "    const event = new MouseEvent('mouseover', { view: window, bubbles: true, cancelable: true });" +
+            "    container.dispatchEvent(event);" +
+            "  }" +
+            "}"
+        );
+        simulateThinking(500, 1000);
+        
+        WebElement moreBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "return document.querySelector('[aria-label=\"More\"]') || " +
+            "       document.querySelector('[class*=\"button\"] [aria-label*=\"More\"]');"
+        );
+        
+        if (moreBtn != null) {
+            clickHumanly(moreBtn);
+            simulateThinking(800, 1200);
+            
+            WebElement deleteItem = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                "return Array.from(document.querySelectorAll('[role=\"menuitem\"]'))" +
+                ".find(el => el.textContent.toLowerCase().includes('delete message'));"
+            );
+            
+            if (deleteItem != null) {
+                clickHumanly(deleteItem);
+                simulateThinking(1000, 1500);
+                
+                WebElement confirmDelete = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                    "return Array.from(document.querySelectorAll('button'))" +
+                    ".find(el => el.textContent.toLowerCase().trim() === 'delete');"
+                );
+                if (confirmDelete != null) {
+                    clickHumanly(confirmDelete);
+                    simulateThinking(1000, 2000);
+                }
+            }
+        }
+    }
+
+    public void changeStatus(String status) {
+        logger.info("Changing online status to: {}", status);
+        WebElement avatar = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "return document.querySelector('[class*=\"avatarWrapper\"]') || " +
+            "       document.querySelector('div[class*=\"panels\"] [class*=\"avatar\"]');"
+        );
+        if (avatar == null) {
+            throw new NoSuchElementException("User avatar not found in dashboard panels.");
+        }
+
+        clickHumanly(avatar);
+        simulateThinking(1500, 2500);
+
+        // Look for the status menu item directly
+        WebElement statusMenu = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "return Array.from(document.querySelectorAll('[id*=\"status-picker\"] [class*=\"item\"], [role=\"menuitem\"]'))" +
+            ".find(el => el.textContent.toLowerCase().includes(arguments[0].toLowerCase()) && el.offsetParent !== null);",
+            status
+        );
+
+        if (statusMenu == null) {
+            logger.info("Direct status menu item not found, attempting to find 'Set Status' or similar submenu trigger...");
+            WebElement subMenuTrigger = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                "return Array.from(document.querySelectorAll('[role=\"menuitem\"]'))" +
+                ".find(el => (el.textContent.toLowerCase().includes('online') || el.textContent.toLowerCase().includes('idle') || " +
+                "            el.textContent.toLowerCase().includes('do not disturb') || el.textContent.toLowerCase().includes('invisible')) && " +
+                "            el.offsetParent !== null);"
+            );
+            if (subMenuTrigger != null) {
+                clickHumanly(subMenuTrigger);
+                simulateThinking(1000, 2000);
+                statusMenu = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                    "return Array.from(document.querySelectorAll('[role=\"menuitem\"], [id*=\"status-picker\"] [class*=\"item\"]'))" +
+                    ".find(el => el.textContent.toLowerCase().includes(arguments[0].toLowerCase()) && el.offsetParent !== null);",
+                    status
+                );
+            }
+        }
+
+        if (statusMenu != null) {
+            logger.info("Found status menu item, clicking: {}", status);
+            clickHumanly(statusMenu);
+            simulateThinking(2000, 3000);
+        } else {
+            // Save screenshot or log DOM for debugging
+            logger.error("Failed to find status menu item for: {}", status);
+            throw new NoSuchElementException("Could not find status menu item for: " + status);
+        }
+    }
+
+    public String getCurrentStatus() {
+        return (String) ((JavascriptExecutor) driver).executeScript(
+            "const avatar = document.querySelector('[class*=\"avatarWrapper\"]') || " +
+            "               document.querySelector('div[class*=\"panels\"] [class*=\"avatar\"]') || " +
+            "               document.querySelector('[aria-label*=\"User area\"] [class*=\"avatar\"]');" +
+            "if (!avatar) return 'unknown';" +
+            "const statusDot = avatar.querySelector('rect[mask*=\"status\"], [class*=\"status\"], [aria-label*=\"Online\"], [aria-label*=\"Idle\"], [aria-label*=\"Disturb\"], [aria-label*=\"Invisible\"], [aria-label*=\"Offline\"]');" +
+            "if (!statusDot) {" +
+            "  // Try finding by the mask or sibling\n" +
+            "  const allRects = Array.from(avatar.querySelectorAll('rect'));\n" +
+            "  const statusRect = allRects.find(r => r.getAttribute('mask') && r.getAttribute('mask').includes('status'));\n" +
+            "  if (statusRect) return statusRect.getAttribute('aria-label') || 'unknown';\n" +
+            "  return 'unknown';\n" +
+            "}" +
+            "return statusDot.getAttribute('aria-label') || 'unknown';"
+        );
+    }
+    public void openFriendsTab() {
+        logger.info("Opening Friends tab...");
+        WebElement homeBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "return document.querySelector('[aria-label=\"Direct Messages\"]') || " +
+            "       document.querySelector('[data-list-item-id$=\"home\"]');"
+        );
+        if (homeBtn != null) {
+            clickHumanly(homeBtn);
+            simulateThinking(1000, 1500);
+            
+            WebElement friendsLink = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                "return Array.from(document.querySelectorAll('[class*=\"channel\"]'))" +
+                ".find(el => el.textContent.toLowerCase().includes('friends'));"
+            );
+            if (friendsLink != null) {
+                clickHumanly(friendsLink);
+                simulateThinking(1000, 2000);
+            }
+        }
+    }
+
     public serverSettingsPage openServerSettings(String name) {
         logger.info("Selecting server: {}", name);
         WebElement server = (WebElement) ((JavascriptExecutor) driver).executeScript(
@@ -452,5 +669,124 @@ public class dashboardPage extends basePage {
         ));
         
         return new serverSettingsPage(driver);
+    }
+
+    public void toggleMute() {
+        logger.info("Toggling mute...");
+        simulateThinking(2000, 4000); // Wait for user panel to load
+        WebElement muteBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "return document.querySelector('button[aria-label=\"Mute\"]') || document.querySelector('button[aria-label=\"Unmute\"]');"
+        );
+        if (muteBtn != null) {
+            clickHumanly(muteBtn);
+            simulateThinking(500, 1000);
+        } else {
+            logger.warn("Mute button not found.");
+        }
+    }
+
+    public void toggleDeafen() {
+        logger.info("Toggling deafen...");
+        simulateThinking(2000, 4000); // Wait for user panel to load
+        WebElement deafenBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "return document.querySelector('button[aria-label=\"Deafen\"]') || document.querySelector('button[aria-label=\"Undeafen\"]');"
+        );
+        if (deafenBtn != null) {
+            clickHumanly(deafenBtn);
+            simulateThinking(500, 1000);
+        } else {
+            logger.warn("Deafen button not found.");
+        }
+    }
+
+    public userSettingsPage openUserSettings() {
+        logger.info("Opening User Settings...");
+        simulateThinking(1000, 2000);
+
+        // 0. Handle potential "Stay in Browser" popup
+        try {
+            WebElement stayInBrowser = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                "return Array.from(document.querySelectorAll('button'))" +
+                ".find(el => el.textContent.toLowerCase().includes('stay in browser') || el.textContent.toLowerCase().includes('continue in browser'));"
+            );
+            if (stayInBrowser != null) {
+                logger.info("Dismissing 'Stay in Browser' popup...");
+                clickHumanly(stayInBrowser);
+                simulateThinking(1000, 2000);
+            }
+        } catch (Exception e) {}
+        
+        boolean settingsOpened = false;
+
+        // Strategy 1: Hotkey (Ctrl + ,)
+        logger.info("Attempting Strategy 1: Ctrl+, Hotkey...");
+        try {
+            Keys modifier = getModifierKey();
+            driver.findElement(By.tagName("body")).sendKeys(Keys.chord(modifier, ","));
+            simulateThinking(3000, 5000);
+            settingsOpened = (Boolean) ((JavascriptExecutor) driver).executeScript(
+                "return document.querySelectorAll('[class*=\"layer\"] [class*=\"standardSidebarView\"]').length > 0 || " +
+                "       document.body.innerText.toLowerCase().includes('my account') || " +
+                "       window.location.href.includes('settings');"
+            );
+        } catch (Exception e) {
+            logger.warn("Strategy 1 (Hotkey) failed: {}", e.getMessage());
+        }
+
+        if (!settingsOpened) {
+            // Strategy 2: Offset click from Deafen button (User's Suggestion)
+            logger.info("Attempting Strategy 2: Offset click from Deafen button...");
+            try {
+                WebElement deafenBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                    "return document.querySelector('button[aria-label=\"Deafen\"]') || document.querySelector('button[aria-label=\"Undeafen\"]');"
+                );
+                if (deafenBtn != null) {
+                    actions.moveToElement(deafenBtn, 36, 0).click().perform();
+                    simulateThinking(3000, 5000);
+                    settingsOpened = (Boolean) ((JavascriptExecutor) driver).executeScript(
+                        "return document.querySelectorAll('[class*=\"layer\"] [class*=\"standardSidebarView\"]').length > 0 || " +
+                        "       document.body.innerText.toLowerCase().includes('my account') || " +
+                        "       window.location.href.includes('settings');"
+                    );
+                }
+            } catch (Exception e) {
+                logger.warn("Strategy 2 (Offset click) failed: {}", e.getMessage());
+            }
+        }
+
+        if (!settingsOpened) {
+            // Strategy 3: Direct button click
+            logger.info("Attempting Strategy 3: Direct button click...");
+            for (int attempt = 0; attempt < 3; attempt++) {
+                WebElement settingsBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                    "return document.querySelector('button[aria-label=\"User Settings\"]') || " +
+                    "       document.querySelector('div[class*=\"panels\"] button[aria-label=\"User Settings\"]') || " +
+                    "       Array.from(document.querySelectorAll('button')).find(el => el.getAttribute('aria-label') === 'User Settings');"
+                );
+
+                if (settingsBtn != null) {
+                    logger.info("Clicking User Settings button (attempt {})...", attempt + 1);
+                    clickHumanly(settingsBtn);
+                    
+                    simulateThinking(4000, 6000);
+                    settingsOpened = (Boolean) ((JavascriptExecutor) driver).executeScript(
+                        "return document.querySelectorAll('[class*=\"layer\"] [class*=\"sidebar\"]').length > 0 || " +
+                        "       document.querySelectorAll('[class*=\"standardSidebarView\"]').length > 0 || " +
+                        "       window.location.href.includes('settings');"
+                    );
+                    if (settingsOpened) {
+                        logger.info("User Settings layer confirmed open.");
+                        break;
+                    }
+                }
+                simulateThinking(2000, 4000);
+            }
+        }
+
+        if (settingsOpened) {
+            return new userSettingsPage(driver);
+        } else {
+            throw new NoSuchElementException("Failed to open User Settings menu using all strategies (Hotkey, Offset, Direct Click).");
+        }
     }
 }

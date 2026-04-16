@@ -11,7 +11,6 @@ public class serverSettingsPage extends basePage {
     }
 
     public void createRole(String name) {
-        clearOverlays();
         logger.info("Step 1: Clicking 'Create Role'...");
         
         boolean rolesClicked = false;
@@ -83,7 +82,6 @@ public class serverSettingsPage extends basePage {
     }
 
     public void enableAdministratorPermission() {
-        clearOverlays();
         logger.info("Step 4: Clicking 'Permissions' tab...");
         boolean permsClicked = false;
         for (int i = 0; i < 10; i++) {
@@ -163,6 +161,10 @@ public class serverSettingsPage extends basePage {
             simulateThinking(500, 1000);
         }
         simulateThinking(1000, 1500);
+
+        logger.info("Exiting server settings menu...");
+        driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+        simulateThinking(1000, 2000);
     }
 
     public void deleteServer(String serverName) {

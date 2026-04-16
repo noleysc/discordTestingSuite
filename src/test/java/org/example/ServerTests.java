@@ -22,17 +22,17 @@ public class ServerTests extends baseTest {
     private dashboardPage dashboard;
     private final Random random = new Random();
 
-    @Override
-    protected boolean useClassLevelDriver() {
-        return true;
-    }
-
-    @BeforeClass(dependsOnMethods = "suiteSetUp")
+    @BeforeClass
     public void loginAndPrepare() {
         serverName = "Nexus Lab " + (random.nextInt(899) + 100);
         logger.info("Starting ServerTests with server name: {}", serverName);
 
-        getDriver().get("https://discord.com/login");
+        if (getDriver().getCurrentUrl().contains("channels/@me")) {
+            logger.info("Already on dashboard, skipping login navigation.");
+        } else {
+            getDriver().get("https://discord.com/login");
+        }
+        
         loginPage login = new loginPage(getDriver());
         login.login(loginIdentifier, loginPassword);
         dashboard = new dashboardPage(getDriver());
@@ -65,15 +65,22 @@ public class ServerTests extends baseTest {
         dashboard.createChannel(channelName, true);
     }
 
-    @Test(priority = 4, dependsOnMethods = "testCreateVoiceChannel", description = "Create a role and enable Administrator permission")
-    @Severity(SeverityLevel.CRITICAL)
-    public void testConfigureServerRoles() {
+    @Test(priority = 4, dependsOnMethods = "testCreateVoiceChannel", description = "Create a new server role")
+    @Severity(SeverityLevel.NORMAL)
+    public void testCreateRole() {
         serverSettingsPage settings = dashboard.openServerSettings(serverName);
         settings.createRole("Lead Architect");
+    }
+
+    @Test(priority = 5, dependsOnMethods = "testCreateRole", description = "Enable Administrator permission for a role")
+    @Severity(SeverityLevel.CRITICAL)
+    public void testEnableAdminPermission() {
+        // Assuming we are already in Server Settings from the previous test or we open it again
+        serverSettingsPage settings = dashboard.openServerSettings(serverName);
         settings.enableAdministratorPermission();
     }
 
-    @Test(priority = 5, dependsOnMethods = "testConfigureServerRoles", description = "Delete the server to clean up")
+    @Test(priority = 6, dependsOnMethods = "testEnableAdminPermission", description = "Delete the server to clean up")
     @Severity(SeverityLevel.NORMAL)
     public void testDeleteServer() {
         serverSettingsPage settings = dashboard.openServerSettings(serverName);

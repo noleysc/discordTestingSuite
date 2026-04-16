@@ -25,6 +25,10 @@ public abstract class basePage {
         PageFactory.initElements(driver, this);
     }
 
+    protected Keys getModifierKey() {
+        return System.getProperty("os.name").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+    }
+
     protected void clickHumanly(WebElement element) {
         clickHumanly(element, false);
     }
@@ -34,7 +38,7 @@ public abstract class basePage {
             logger.error("Attempted to click a null element");
             throw new IllegalArgumentException("Cannot click a null element");
         }
-        logger.debug("Performing Titanium Stealth Robot click on: {}", element);
+        logger.debug("Performing non-invasive click on: {}", element);
         try {
             // 1. Ensure element is fully in view
             ((JavascriptExecutor) driver).executeScript(
@@ -42,45 +46,7 @@ public abstract class basePage {
             );
             simulateThinking(800, 1200);
 
-            // 2. Attempt Hardware-Level Click using Java AWT Robot
-            try {
-                java.awt.Robot robot = new java.awt.Robot();
-                
-                // Get window position and viewport offsets
-                Point windowPos = driver.manage().window().getPosition();
-                Long innerHeight = (Long) ((JavascriptExecutor) driver).executeScript("return window.innerHeight;");
-                Long outerHeight = (Long) ((JavascriptExecutor) driver).executeScript("return window.outerHeight;");
-                Long innerWidth = (Long) ((JavascriptExecutor) driver).executeScript("return window.innerWidth;");
-                Long outerWidth = (Long) ((JavascriptExecutor) driver).executeScript("return window.outerWidth;");
-                
-                int yOffset = (int) (outerHeight - innerHeight); // Top browser chrome (tabs, address bar)
-                int xOffset = (int) (outerWidth - innerWidth) / 2; // Side borders
-                
-                Rectangle rect = element.getRect();
-                
-                // Calculate absolute OS coordinates with slight jitter off-center
-                int targetX = windowPos.getX() + xOffset + rect.getX() + (rect.getWidth() / 2) + (random.nextInt(10) - 5);
-                int targetY = windowPos.getY() + yOffset + rect.getY() + (rect.getHeight() / 2) + (random.nextInt(10) - 5);
-                
-                robot.mouseMove(targetX, targetY);
-                simulateThinking(150, 300);
-                
-                robot.mousePress(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);
-                simulateThinking(50, 120); // Human click hold time
-                robot.mouseRelease(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);
-                
-                logger.debug("Robot click executed at absolute {},{}", targetX, targetY);
-
-                if (moveAway) {
-                    simulateThinking(200, 500);
-                    robot.mouseMove(targetX + random.nextInt(200) - 100, targetY + random.nextInt(200) - 100);
-                }
-                return; // Success!
-            } catch (Exception robotEx) {
-                logger.warn("Robot hardware click failed, falling back to Actions: {}", robotEx.getMessage());
-            }
-
-            // 3. Fallback to Selenium Actions
+            // 2. Perform Selenium Actions click
             int xOffset = (int) (element.getRect().getWidth() * (0.3 + random.nextDouble() * 0.4));
             int yOffset = (int) (element.getRect().getHeight() * (0.3 + random.nextDouble() * 0.4));
 
@@ -160,7 +126,6 @@ public abstract class basePage {
 
     public void clearOverlays() {
         try {
-            driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
             ((JavascriptExecutor) driver).executeScript(
                 "// Dismiss buttons first with expanded text matches\n" +
                 "document.querySelectorAll('button').forEach(btn => {\n" +

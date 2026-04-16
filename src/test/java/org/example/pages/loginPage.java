@@ -55,6 +55,20 @@ public class loginPage extends basePage {
         
         logger.info("Pressing ENTER to submit login...");
         passwordInput.sendKeys(org.openqa.selenium.Keys.ENTER);
+
+        // Rate limit check
+        try {
+            boolean rateLimited = (Boolean) ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                "return document.body.innerText.toLowerCase().includes('rate limited');"
+            );
+            if (rateLimited) {
+                logger.warn("!!! CRITICAL: Rate limit detected !!!");
+                logger.warn("Waiting 60 seconds for rate limit to cool down...");
+                Thread.sleep(60000);
+                // Attempt one more Enter after wait
+                passwordInput.sendKeys(org.openqa.selenium.Keys.ENTER);
+            }
+        } catch (Exception ignore) {}
     }
 
     public boolean isDashboardLoaded() {

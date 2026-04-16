@@ -10,10 +10,8 @@ import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
 
 import java.io.File;
 
@@ -29,25 +27,15 @@ public class baseTest {
         return System.getProperty("os.name").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
     }
 
-    // Default: Reset driver for every method unless overridden
-    protected boolean useClassLevelDriver() {
-        return false;
-    }
-
-    @BeforeClass
+    @BeforeSuite
     public void suiteSetUp() {
-        if (useClassLevelDriver()) {
-            logger.info("Initializing Class-Level Firefox WebDriver...");
-            initDriver();
-        }
+        logger.info("Initializing Suite-Level Firefox WebDriver...");
+        initDriver();
     }
 
-    @BeforeMethod
-    public void methodSetUp() {
-        if (!useClassLevelDriver()) {
-            logger.info("Initializing Method-Level Firefox WebDriver...");
-            initDriver();
-        }
+    @AfterSuite
+    public void suiteTearDown() {
+        quitDriver();
     }
 
     private void initDriver() {
@@ -57,20 +45,6 @@ public class baseTest {
 
         driverThreadLocal.set(initFirefox());
         getDriver().manage().window().maximize();
-    }
-
-    @AfterMethod
-    public void methodTearDown() {
-        if (!useClassLevelDriver()) {
-            quitDriver();
-        }
-    }
-
-    @AfterClass
-    public void suiteTearDown() {
-        if (useClassLevelDriver()) {
-            quitDriver();
-        }
     }
 
     private void quitDriver() {
@@ -84,26 +58,29 @@ public class baseTest {
     protected WebDriver initFirefox() {
         FirefoxOptions options = new FirefoxOptions();
         
-        // Clean Room Strategy: Use a thread-unique isolated profile for automation
-        String threadId = String.valueOf(Thread.currentThread().getId());
-        String profilePath = System.getProperty("user.dir") + "\\AutomationProfile\\Firefox_Clean_" + threadId;
-        File profileDir = new File(profilePath);
+        // Use the explicit binary path provided by the user
+        // Note: Selenium usually needs the .exe, but we'll try to point to the standard install if the link is just a shortcut
+        String firefoxPath = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
+        options.setBinary(firefoxPath);
+        
+        // Use a stable profile for persistent session
+        String testProfilePath = System.getProperty("user.dir") + "\\AutomationProfile\\Firefox_Main_Session";
+        File profileDir = new File(testProfilePath);
         if (!profileDir.exists()) profileDir.mkdirs();
         
-        logger.info("Using dedicated automation profile for thread " + threadId + ": " + profilePath);
-        options.addArguments("-profile", profilePath);
+        options.addArguments("-profile", testProfilePath);
         options.addArguments("-no-remote");
         
-        // Advanced Stealth & Fingerprint Protection
-        String os = System.getProperty("os.name").toLowerCase();
-        String userAgent = os.contains("mac") 
-            ? "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0"
-            : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0";
-        
-        options.addPreference("general.useragent.override", userAgent);
+        // Disable all permission prompts
+        options.addPreference("permissions.default.desktop-notification", 2);
+        options.addPreference("permissions.default.camera", 2);
+        options.addPreference("permissions.default.microphone", 2);
+        options.addPreference("permissions.default.geo", 2);
+        options.addPreference("privacy.popups.showBrowserMessage", false);
         options.addPreference("dom.webdriver.enabled", false);
         options.addPreference("useAutomationExtension", false);
-        options.addPreference("privacy.trackingprotection.enabled", false);
+        
+        options.addPreference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0");
         
         return new FirefoxDriver(options);
     }
@@ -134,6 +111,17 @@ public class baseTest {
                     }
                 }
             }
+        }
+    }
+
+    protected void simulateThinking(int min, int max) {
+        if (max <= min) {
+            max = min + 100;
+        }
+        try {
+            Thread.sleep(new java.util.Random().nextInt(max - min + 1) + min);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
