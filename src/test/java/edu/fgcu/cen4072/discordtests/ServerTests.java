@@ -1,6 +1,7 @@
 package edu.fgcu.cen4072.discordtests;
 
 import io.qameta.allure.*;
+<<<<<<< Updated upstream:src/test/java/edu/fgcu/cen4072/discordtests/ServerTests.java
 import edu.fgcu.cen4072.discordtests.pages.DashboardPage;
 import edu.fgcu.cen4072.discordtests.pages.LoginPage;
 import edu.fgcu.cen4072.discordtests.pages.ServerSettingsPage;

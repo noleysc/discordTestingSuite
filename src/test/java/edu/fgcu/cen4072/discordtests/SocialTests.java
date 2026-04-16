@@ -28,21 +28,43 @@ public class SocialTests extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     public void testSetStatusIdle() {
         dashboard.changeStatus("Idle");
-        assertThat(dashboard.getCurrentStatus())
-                .as("Status should be updated to Idle")
-                .containsIgnoringCase("Idle");
+        simulateThinking(3000, 5000);
+        assertThat(dashboard.getCurrentStatus().toLowerCase())
+                .as("Status should be Idle")
+                .contains("idle");
     }
 
     @Test(priority = 2, description = "Change user online status to Do Not Disturb")
     @Severity(SeverityLevel.NORMAL)
     public void testSetStatusDND() {
         dashboard.changeStatus("Do Not Disturb");
-        assertThat(dashboard.getCurrentStatus())
-                .as("Status should be updated to Do Not Disturb")
-                .containsIgnoringCase("Disturb");
+        simulateThinking(3000, 5000);
+        assertThat(dashboard.getCurrentStatus().toLowerCase())
+                .as("Status should be Do Not Disturb")
+                .contains("disturb");
     }
 
-    @Test(priority = 3, description = "Navigate to Friends Tab")
+    @Test(priority = 3, description = "Change user status to Invisible (Offline)")
+    @Severity(SeverityLevel.NORMAL)
+    public void testChangeStatusToInvisible() {
+        dashboard.changeStatus("Invisible");
+        simulateThinking(3000, 5000);
+        assertThat(dashboard.getCurrentStatus().toLowerCase())
+                .as("Status should be Invisible")
+                .contains("invisible");
+    }
+
+    @Test(priority = 4, description = "Change user status back to Online")
+    @Severity(SeverityLevel.NORMAL)
+    public void testChangeStatusToOnline() {
+        dashboard.changeStatus("Online");
+        simulateThinking(3000, 5000);
+        assertThat(dashboard.getCurrentStatus().toLowerCase())
+                .as("Status should be Online")
+                .contains("online");
+    }
+
+    @Test(priority = 5, description = "Navigate to Friends Tab")
     @Severity(SeverityLevel.MINOR)
     public void testNavigateToFriends() {
         dashboard.openFriendsTab();

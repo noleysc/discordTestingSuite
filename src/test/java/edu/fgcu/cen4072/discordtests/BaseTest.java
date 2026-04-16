@@ -1,11 +1,12 @@
 package edu.fgcu.cen4072.discordtests;
 
+import io.qameta.allure.Attachment;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.firefox.FirefoxProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterSuite;
@@ -38,8 +39,11 @@ public class BaseTest {
 
     private void initDriver() {
         // Add a short delay to cool down
-        logger.warn("Cooldown delay: waiting 2 seconds before initializing driver...");
-        try { Thread.sleep(2000); } catch (InterruptedException ignore) {}
+        logger.warn("Cooldown delay: waiting 5 seconds before initializing driver...");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException ignore) {
+        }
 
         driverThreadLocal.set(initFirefox());
         getDriver().manage().window().maximize();
@@ -55,13 +59,13 @@ public class BaseTest {
 
     protected WebDriver initFirefox() {
         FirefoxOptions options = new FirefoxOptions();
-        
+
         // Use the explicit binary path provided by the user
-        String firefoxPath = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
+        String firefoxPath = "C:\Program Files\Mozilla Firefox\firefox.exe";
         options.setBinary(firefoxPath);
-        
-        // 1. Clear session cache to force fresh authentication
-        String testProfilePath = System.getProperty("user.dir") + "\\AutomationProfile\\Firefox_Main_Session";
+
+        // Use a stable profile for persistent session
+        String testProfilePath = System.getProperty("user.dir") + "\AutomationProfile\Firefox_Main_Session";
         File profileDir = new File(testProfilePath);
         if (profileDir.exists()) {
             logger.info("Clearing previous session cache at: {}", testProfilePath);
@@ -75,11 +79,11 @@ public class BaseTest {
             }
         }
         if (!profileDir.exists()) profileDir.mkdirs();
-        
+
         options.addArguments("-profile", testProfilePath);
         options.addArguments("-no-remote");
-        
-        // 2. Set virtual media permissions
+
+        // Set virtual media permissions
         options.addPreference("permissions.default.desktop-notification", 1);
         options.addPreference("permissions.default.camera", 1);
         options.addPreference("permissions.default.microphone", 1);
@@ -98,16 +102,16 @@ public class BaseTest {
         options.addArguments("--disable-blink-features=AutomationControlled");
         // Update to a more stable, widely accepted Firefox user agent
         options.addPreference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0");
-        
+
         return new FirefoxDriver(options);
     }
 
     private void copyProfileSelection(File source, File target) {
         if (!target.exists()) target.mkdirs();
-        
+
         // Critical files for session & auth
         String[] criticalFiles = {"cookies.sqlite", "places.sqlite", "sessionstore.jsonlz4", "key4.db", "logins.json", "cert9.db"};
-        
+
         for (String fileName : criticalFiles) {
             File srcFile = new File(source, fileName);
             File destFile = new File(target, fileName);
@@ -140,5 +144,10 @@ public class BaseTest {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    @Attachment(value = "Page screenshot", type = "image/png")
+    public byte[] saveScreenshot(WebDriver driver) {
+        return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
     }
 }
