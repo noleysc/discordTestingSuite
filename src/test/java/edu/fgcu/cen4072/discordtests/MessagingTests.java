@@ -20,17 +20,19 @@ public class MessagingTests extends BaseTest {
     private final Random random = new Random();
 
     @BeforeClass
-    public void loginOnly() {
-        if (getDriver().getCurrentUrl().contains("channels/@me")) {
-            logger.info("Already on dashboard, skipping login navigation.");
-        } else {
-            getDriver().get("https://discord.com/login");
+    public void prepareMessaging() {
+        if (dashboard == null) {
+            dashboard = new DashboardPage(getDriver());
         }
         
-        LoginPage login = new LoginPage(getDriver());
-        login.login(loginIdentifier, loginPassword);
-        dashboard = new DashboardPage(getDriver());
-        dashboard.ensureHydrated();
+        try {
+            if (!dashboard.isHydrated()) {
+                dashboard.ensureHydrated();
+            }
+        } catch (Exception e) {
+            logger.info("Dashboard not hydrated, ensuring session is active.");
+            dashboard.ensureHydrated();
+        }
         
         channelName = "test-chat-" + (random.nextInt(899) + 100);
         logger.info("MessagingTests prepared with channel: {}", channelName);
