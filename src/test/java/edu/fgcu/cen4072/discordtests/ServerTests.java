@@ -22,27 +22,13 @@ public class ServerTests extends BaseTest {
     private final Random random = new Random();
 
     @BeforeClass
-    public void loginAndPrepare() {
+    public void prepareServerTests() {
         serverName = "Nexus Lab " + (random.nextInt(899) + 100);
         logger.info("Starting ServerTests with server name: {}", serverName);
 
-        // Check if we are already logged in to the dashboard
         if (dashboard == null) {
             dashboard = new DashboardPage(getDriver());
         }
-        
-        try {
-            if (dashboard.isHydrated()) {
-                logger.info("Already authenticated on dashboard, skipping login.");
-                return;
-            }
-        } catch (Exception e) {
-            logger.info("Dashboard not hydrated, proceeding with login.");
-        }
-
-        getDriver().get("https://discord.com/login");
-        LoginPage login = new LoginPage(getDriver());
-        login.login(loginIdentifier, loginPassword);
         dashboard.ensureHydrated();
     }
 
