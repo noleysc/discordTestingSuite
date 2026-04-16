@@ -66,7 +66,10 @@ public class BaseTest {
         if (profileDir.exists()) {
             logger.info("Clearing previous session cache at: {}", testProfilePath);
             try {
-                org.apache.commons.io.FileUtils.deleteDirectory(profileDir);
+                java.nio.file.Files.walk(profileDir.toPath())
+                    .sorted(java.util.Comparator.reverseOrder())
+                    .map(java.nio.file.Path::toFile)
+                    .forEach(File::delete);
             } catch (Exception e) {
                 logger.warn("Could not fully delete directory, attempting to clear specific session files...");
             }
