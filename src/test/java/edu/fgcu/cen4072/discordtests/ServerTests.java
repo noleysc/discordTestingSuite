@@ -26,15 +26,23 @@ public class ServerTests extends BaseTest {
         serverName = "Nexus Lab " + (random.nextInt(899) + 100);
         logger.info("Starting ServerTests with server name: {}", serverName);
 
-        if (getDriver().getCurrentUrl().contains("channels/@me")) {
-            logger.info("Already on dashboard, skipping login navigation.");
-        } else {
-            getDriver().get("https://discord.com/login");
+        // Check if we are already logged in to the dashboard
+        if (dashboard == null) {
+            dashboard = new DashboardPage(getDriver());
         }
         
+        try {
+            if (dashboard.isHydrated()) {
+                logger.info("Already authenticated on dashboard, skipping login.");
+                return;
+            }
+        } catch (Exception e) {
+            logger.info("Dashboard not hydrated, proceeding with login.");
+        }
+
+        getDriver().get("https://discord.com/login");
         LoginPage login = new LoginPage(getDriver());
         login.login(loginIdentifier, loginPassword);
-        dashboard = new DashboardPage(getDriver());
         dashboard.ensureHydrated();
     }
 
