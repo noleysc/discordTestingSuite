@@ -195,10 +195,10 @@ public class DashboardPage extends BasePage {
         }
 
         logger.info("Selecting audience...");
-        WebElement audience = null;
+        boolean selected = false;
         for (int attempt = 0; attempt < 15; attempt++) {
-            // Find option and click using JavaScript to bypass overlap/interaction issues
-            boolean clicked = (Boolean) ((JavascriptExecutor) driver).executeScript(
+            // Find and interact with option
+            String script = 
                 "const options = Array.from(document.querySelectorAll('button, [role=\"button\"], div[class*=\"container\"], [class*=\"option\"]'));" +
                 "const target = options.find(el => {" +
                 "  const text = el.textContent.toLowerCase();" +
@@ -207,15 +207,18 @@ public class DashboardPage extends BasePage {
                 "          text.includes('skip this question'));" +
                 "});" +
                 "if (target && target.offsetParent !== null) {" +
-                "  target.click();" +
+                "  target.scrollIntoView({block: 'center'});" +
+                "  // Try direct click first, then force if needed" +
+                "  try { target.click(); } catch(e) { target.dispatchEvent(new MouseEvent('click', { bubbles: true })); }" +
                 "  return true;" +
                 "}" +
-                "return false;"
-            );
+                "return false;";
+                
+            selected = (Boolean) ((JavascriptExecutor) driver).executeScript(script);
             
-            if (clicked) {
-                logger.info("Audience option clicked successfully.");
-                simulateThinking(2000, 3000);
+            if (selected) {
+                logger.info("Audience option clicked, waiting for UI transition...");
+                simulateThinking(2500, 3500);
                 
                 // Verify advancement
                 boolean advanced = (Boolean) ((JavascriptExecutor) driver).executeScript(
@@ -225,9 +228,11 @@ public class DashboardPage extends BasePage {
                 if (advanced) {
                     logger.info("Advanced to server customization screen.");
                     break;
+                } else {
+                    logger.warn("Click performed but advancement not detected. Screen state may be stuck.");
                 }
             }
-            simulateThinking(1500, 2500);
+            simulateThinking(2000, 3000);
         }
 
         if (pfpPath != null && !pfpPath.isEmpty()) {
