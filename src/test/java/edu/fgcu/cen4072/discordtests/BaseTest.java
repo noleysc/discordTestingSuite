@@ -85,9 +85,14 @@ public class BaseTest {
         options.addPreference("permissions.default.microphone", 1);
         options.addPreference("media.navigator.permission.disabled", true);
         options.addPreference("media.navigator.streams.fake", true);
+        
+        // Anti-bot/Anti-Desktop-App detection
         options.addPreference("dom.webdriver.enabled", false);
         options.addPreference("useAutomationExtension", false);
+        options.addPreference("network.websocket.extensions.enabled", false);
+        options.addPreference("dom.webnotifications.enabled", false);
         
+        // Hide navigator.webdriver and other artifacts
         options.addPreference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0");
         
         return new FirefoxDriver(options);
