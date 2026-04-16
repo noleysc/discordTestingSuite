@@ -102,12 +102,13 @@ public class ServerSettingsPage extends BasePage {
         WebElement adminToggle = null;
         for (int i = 0; i < 5; i++) {
             adminToggle = (WebElement) ((JavascriptExecutor) driver).executeScript(
-                "const adminText = Array.from(document.querySelectorAll('span, div'))" +
+                "const adminText = Array.from(document.querySelectorAll('span, div, label'))" +
                 ".find(el => el.textContent.trim() === 'Administrator' && el.offsetParent !== null);" +
                 "if (!adminText) return null;" +
-                "// Look for the toggle in the row that contains the 'Administrator' text" +
-                "const row = adminText.closest('[class*=\"row\"], [class*=\"container\"], [class*=\"item\"]');" +
-                "return row ? row.querySelector('[role=\"switch\"], input[type=\"checkbox\"]') : null;"
+                "// Find the toggle switch associated with this label, typically in the same row/container" +
+                "// Looking for a role=switch or checkbox near the text" +
+                "const container = adminText.closest('[class*=\"row\"], [class*=\"container\"], [class*=\"item\"]');" +
+                "return container ? container.querySelector('[role=\"switch\"], input[type=\"checkbox\"]') : null;"
             );
             if (adminToggle != null) break;
             simulateThinking(1000, 1500);
