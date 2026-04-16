@@ -716,8 +716,27 @@ public class DashboardPage extends BasePage {
         return new ServerSettingsPage(driver);
     }
 
+    private void dismissBrowserUpdatePopup() {
+        try {
+            WebElement dismissBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                "return Array.from(document.querySelectorAll('button, div'))" +
+                ".find(el => (el.textContent.toLowerCase().includes('update now') || " +
+                "             el.textContent.toLowerCase().includes('later') || " +
+                "             el.getAttribute('aria-label') === 'Close') && el.offsetParent !== null);"
+            );
+            if (dismissBtn != null) {
+                logger.info("Detected 'Unsupported Browser' or update popup, dismissing...");
+                clickHumanly(dismissBtn);
+                simulateThinking(1000, 2000);
+            }
+        } catch (Exception e) {
+            logger.debug("No browser update popup detected.");
+        }
+    }
+
     public void toggleMute() {
         logger.info("Toggling mute...");
+        dismissBrowserUpdatePopup();
         simulateThinking(2000, 4000); // Wait for user panel to load
         WebElement muteBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
             "return document.querySelector('button[aria-label=\"Mute\"]') || document.querySelector('button[aria-label=\"Unmute\"]');"
