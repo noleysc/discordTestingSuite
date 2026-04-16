@@ -28,6 +28,15 @@ public class loginPage extends basePage {
         }
         
         clearOverlays();
+        
+        // Quick check if we get redirected instantly
+        try {
+            new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(3))
+                .until(org.openqa.selenium.support.ui.ExpectedConditions.urlContains("channels/@me"));
+            logger.info("Fast redirect to dashboard detected, skipping login.");
+            return;
+        } catch (Exception ignore) {}
+
         try {
             waitForClickable(emailInput);
         } catch (TimeoutException e) {

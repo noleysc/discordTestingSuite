@@ -30,60 +30,121 @@ public abstract class basePage {
     }
 
     protected void clickHumanly(WebElement element, boolean moveAway) {
-        logger.debug("Performing simplified human click on: {}", element);
+        if (element == null) {
+            logger.error("Attempted to click a null element");
+            throw new IllegalArgumentException("Cannot click a null element");
+        }
+        logger.debug("Performing Titanium Stealth Robot click on: {}", element);
         try {
-            // 1. Move to element with slight jitter
-            actions.moveToElement(element, random.nextInt(4) - 2, random.nextInt(4) - 2)
-                    .pause(Duration.ofMillis(random.nextInt(50) + 30))
+            // 1. Ensure element is fully in view
+            ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});", element
+            );
+            simulateThinking(800, 1200);
+
+            // 2. Attempt Hardware-Level Click using Java AWT Robot
+            try {
+                java.awt.Robot robot = new java.awt.Robot();
+                
+                // Get window position and viewport offsets
+                Point windowPos = driver.manage().window().getPosition();
+                Long innerHeight = (Long) ((JavascriptExecutor) driver).executeScript("return window.innerHeight;");
+                Long outerHeight = (Long) ((JavascriptExecutor) driver).executeScript("return window.outerHeight;");
+                Long innerWidth = (Long) ((JavascriptExecutor) driver).executeScript("return window.innerWidth;");
+                Long outerWidth = (Long) ((JavascriptExecutor) driver).executeScript("return window.outerWidth;");
+                
+                int yOffset = (int) (outerHeight - innerHeight); // Top browser chrome (tabs, address bar)
+                int xOffset = (int) (outerWidth - innerWidth) / 2; // Side borders
+                
+                Rectangle rect = element.getRect();
+                
+                // Calculate absolute OS coordinates with slight jitter off-center
+                int targetX = windowPos.getX() + xOffset + rect.getX() + (rect.getWidth() / 2) + (random.nextInt(10) - 5);
+                int targetY = windowPos.getY() + yOffset + rect.getY() + (rect.getHeight() / 2) + (random.nextInt(10) - 5);
+                
+                robot.mouseMove(targetX, targetY);
+                simulateThinking(150, 300);
+                
+                robot.mousePress(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);
+                simulateThinking(50, 120); // Human click hold time
+                robot.mouseRelease(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);
+                
+                logger.debug("Robot click executed at absolute {},{}", targetX, targetY);
+
+                if (moveAway) {
+                    simulateThinking(200, 500);
+                    robot.mouseMove(targetX + random.nextInt(200) - 100, targetY + random.nextInt(200) - 100);
+                }
+                return; // Success!
+            } catch (Exception robotEx) {
+                logger.warn("Robot hardware click failed, falling back to Actions: {}", robotEx.getMessage());
+            }
+
+            // 3. Fallback to Selenium Actions
+            int xOffset = (int) (element.getRect().getWidth() * (0.3 + random.nextDouble() * 0.4));
+            int yOffset = (int) (element.getRect().getHeight() * (0.3 + random.nextDouble() * 0.4));
+
+            actions.moveToElement(element, xOffset - (element.getRect().getWidth()/2), yOffset - (element.getRect().getHeight()/2))
+                    .pause(Duration.ofMillis(random.nextInt(100) + 50))
+                    .clickAndHold()
+                    .pause(Duration.ofMillis(random.nextInt(80) + 40))
+                    .release()
                     .perform();
             
-            // 2. Standard atomic click
-            element.click();
-            logger.debug("Standard click successful.");
-            
-            // 3. Optional move away
-            if (moveAway) {
-                actions.moveByOffset(random.nextInt(50) + 20, random.nextInt(50) + 20)
-                        .perform();
-            }
         } catch (Exception e) {
-            logger.warn("Standard click failed, using JS click fallback: {}", e.getMessage());
+            logger.warn("Actions click failed, using Deep JS Bubbling Fallback: {}", e.getMessage());
             try {
-                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+                // Deep JS click that bubbles properly for React
+                ((JavascriptExecutor) driver).executeScript(
+                    "const el = arguments[0];" +
+                    "const event = new MouseEvent('click', { view: window, bubbles: true, cancelable: true, buttons: 1 });" +
+                    "el.dispatchEvent(event);", element
+                );
             } catch (Exception e2) {
-                logger.error("All click attempts failed.");
+                logger.error("All click attempts failed for element.");
+                throw new RuntimeException("Click failed: " + e2.getMessage());
             }
         }
     }
 
     protected void typeHumanly(WebElement element, String text) {
-        logger.debug("Typing '{}' into element: {}", text, element);
-        
-        // Initial "thinking" delay before starting to type
-        simulateThinking(400, 900);
+        logger.debug("Performing Gaussian typing for: {}", text);
+        simulateThinking(600, 1200);
 
         for (int i = 0; i < text.length(); i++) {
             char ch = text.charAt(i);
             
-            // 3% chance of a "typo" if it's an alphanumeric character
-            if (random.nextInt(100) < 3 && Character.isLetterOrDigit(ch)) {
-                char typo = (char) (ch + (random.nextBoolean() ? 1 : -1));
-                element.sendKeys(String.valueOf(typo));
-                simulateThinking(150, 300); // Quick pause after mistake
-                element.sendKeys(Keys.BACK_SPACE);
-                simulateThinking(200, 400); // Pause before correction
-            }
+            // 2% chance of a "hesitation" pause
+            if (random.nextInt(100) < 2) simulateThinking(400, 800);
             
+            // 1% chance of a typo on long strings
+            if (text.length() > 5 && random.nextInt(100) < 1 && Character.isLetterOrDigit(ch)) {
+                element.sendKeys(String.valueOf((char)(ch + 1)));
+                simulateThinking(100, 250);
+                element.sendKeys(Keys.BACK_SPACE);
+                simulateThinking(150, 350);
+            }
+
             element.sendKeys(String.valueOf(ch));
             
-            // Human rhythm: Gaussian jitter + occasional longer pauses between "chunks"
-            long delay = (long) (105 + (random.nextGaussian() * 35));
-            if (ch == '@' || ch == '.' || random.nextInt(100) < 5) {
-                simulateThinking(200, 500); // Pause at natural break points or randomly
-            } else {
-                simulateThinking((int) Math.max(65, delay), (int) delay + 45);
-            }
+            // Human rhythm: Gaussian distribution around 120ms
+            double delay = (random.nextGaussian() * 40) + 120;
+            simulateThinking((int) Math.max(45, delay), (int) delay + 30);
+
+            // Longer pause after punctuation or spaces
+            if (ch == ' ' || ch == '.' || ch == '-') simulateThinking(150, 450);
         }
+    }
+
+    protected void injectStealth() {
+        try {
+            ((JavascriptExecutor) driver).executeScript(
+                "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});" +
+                "window.chrome = { runtime: {} };" +
+                "Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});" +
+                "Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});"
+            );
+        } catch (Exception ignored) {}
     }
 
     protected void simulateThinking(int min, int max) {
@@ -97,21 +158,24 @@ public abstract class basePage {
         }
     }
 
-    protected void clearOverlays() {
+    public void clearOverlays() {
         try {
             driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
             ((JavascriptExecutor) driver).executeScript(
-                "// Dismiss buttons first\n" +
+                "// Dismiss buttons first with expanded text matches\n" +
                 "document.querySelectorAll('button').forEach(btn => {\n" +
                 "  const text = btn.textContent.toLowerCase();\n" +
-                "  if (text.includes('got it') || text.includes('skip') || text.includes('dismiss') || text.includes('maybe later')) {\n" +
+                "  if (text.includes('got it') || text.includes('skip') || text.includes('dismiss') || \n" +
+                "      text.includes('maybe later') || text.includes('no thanks') || text.includes('i\\'ll do it later')) {\n" +
                 "    try { btn.click(); } catch(e) {}\n" +
                 "  }\n" +
                 "});\n" +
-                "var obstructions = document.querySelectorAll('div[class*=\"layerContainer\"], div[class*=\"backdrop\"], div[class*=\"modal\"], div[class*=\"tooltip\"]');" +
+                "// Remove obstructing layers\n" +
+                "var obstructions = document.querySelectorAll('div[class*=\"layerContainer\"], div[class*=\"backdrop\"], div[class*=\"modal\"], div[class*=\"tooltip\"], [class*=\"focusLock\"]');" +
                 "obstructions.forEach(function(el) { " +
                 "  try { el.style.display = 'none'; el.remove(); } catch(e) {} " +
                 "});" +
+                "// Re-enable pointer events on the main app\n" +
                 "var mount = document.querySelector('#app-mount');" +
                 "if(mount) { mount.style.pointerEvents = 'auto'; mount.style.opacity = '1'; }"
             );

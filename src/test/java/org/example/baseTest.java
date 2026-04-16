@@ -1,6 +1,7 @@
 package org.example;
 
 import io.qameta.allure.Attachment;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
@@ -22,6 +23,10 @@ public class baseTest {
 
     public WebDriver getDriver() {
         return driverThreadLocal.get();
+    }
+
+    protected Keys getModifierKey() {
+        return System.getProperty("os.name").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
     }
 
     // Default: Reset driver for every method unless overridden
@@ -79,29 +84,57 @@ public class baseTest {
     protected WebDriver initFirefox() {
         FirefoxOptions options = new FirefoxOptions();
         
-        // Use a unique profile subdirectory to avoid lock issues
-        String baseProfilePath = System.getProperty("user.dir") + "/AutomationProfile/Firefox";
-        String uniqueProfilePath = baseProfilePath + "_" + System.currentTimeMillis();
-        File profileDir = new File(uniqueProfilePath);
+        // Clean Room Strategy: Use a thread-unique isolated profile for automation
+        String threadId = String.valueOf(Thread.currentThread().getId());
+        String profilePath = System.getProperty("user.dir") + "\\AutomationProfile\\Firefox_Clean_" + threadId;
+        File profileDir = new File(profilePath);
         if (!profileDir.exists()) profileDir.mkdirs();
         
-        options.addArguments("-profile", uniqueProfilePath);
+        logger.info("Using dedicated automation profile for thread " + threadId + ": " + profilePath);
+        options.addArguments("-profile", profilePath);
+        options.addArguments("-no-remote");
         
-        // Hide webdriver usage and set User Agent directly on options
+        // Advanced Stealth & Fingerprint Protection
+        String os = System.getProperty("os.name").toLowerCase();
+        String userAgent = os.contains("mac") 
+            ? "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0"
+            : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0";
+        
+        options.addPreference("general.useragent.override", userAgent);
         options.addPreference("dom.webdriver.enabled", false);
         options.addPreference("useAutomationExtension", false);
-        options.addPreference("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0");
-        
-        // Suppress permission prompts
-        options.addPreference("permissions.default.desktop-notification", 2);
-        options.addPreference("permissions.default.microphone", 2);
-        options.addPreference("permissions.default.camera", 2);
-        options.addPreference("permissions.default.geo", 2);
-        options.addPreference("dom.webnotifications.enabled", false);
-        options.addPreference("media.navigator.permission.disabled", true);
-        options.addPreference("media.navigator.streams.fake", true);
+        options.addPreference("privacy.trackingprotection.enabled", false);
         
         return new FirefoxDriver(options);
+    }
+
+    private void copyProfileSelection(File source, File target) {
+        if (!target.exists()) target.mkdirs();
+        
+        // Critical files for session & auth
+        String[] criticalFiles = {"cookies.sqlite", "places.sqlite", "sessionstore.jsonlz4", "key4.db", "logins.json", "cert9.db"};
+        
+        for (String fileName : criticalFiles) {
+            File srcFile = new File(source, fileName);
+            File destFile = new File(target, fileName);
+            if (srcFile.exists()) {
+                try (java.io.FileInputStream in = new java.io.FileInputStream(srcFile);
+                     java.io.FileOutputStream out = new java.io.FileOutputStream(destFile)) {
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Resilient copy failed for " + fileName + ", attempting standard copy: " + e.getMessage());
+                    try {
+                        java.nio.file.Files.copy(srcFile.toPath(), destFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    } catch (Exception e2) {
+                        logger.error("All copy attempts failed for " + fileName);
+                    }
+                }
+            }
+        }
     }
 
     @Attachment(value = "Page screenshot", type = "image/png")
