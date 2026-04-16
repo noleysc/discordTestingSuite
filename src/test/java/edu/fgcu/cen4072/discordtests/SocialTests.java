@@ -16,17 +16,11 @@ public class SocialTests extends BaseTest {
     private DashboardPage dashboard;
 
     @BeforeClass
-    public void loginAndPrepare() {
+    public void prepareSocial() {
         logger.info("Starting SocialTests...");
-        if (getDriver().getCurrentUrl().contains("channels/@me")) {
-            logger.info("Already on dashboard, skipping login navigation.");
-        } else {
-            getDriver().get("https://discord.com/login");
+        if (dashboard == null) {
+            dashboard = new DashboardPage(getDriver());
         }
-
-        LoginPage login = new LoginPage(getDriver());
-        login.login(loginIdentifier, loginPassword);
-        dashboard = new DashboardPage(getDriver());
         dashboard.ensureHydrated();
     }
 
