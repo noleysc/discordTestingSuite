@@ -15,12 +15,6 @@ public class NavigationTests extends BaseTest {
 
     private static final String LOGIN_URL = "https://discord.com/login";
 
-    @org.testng.annotations.BeforeMethod
-    public void methodDelay() {
-        logger.info("Waiting 1 second before navigation test...");
-        simulateThinking(1000, 1500);
-    }
-
     @Test
     public void testLoginPageLoads() {
         getDriver().get(LOGIN_URL);
