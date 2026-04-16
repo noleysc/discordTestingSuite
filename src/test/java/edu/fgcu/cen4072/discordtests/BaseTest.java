@@ -91,8 +91,11 @@ public class BaseTest {
         options.addPreference("useAutomationExtension", false);
         options.addPreference("network.websocket.extensions.enabled", false);
         options.addPreference("dom.webnotifications.enabled", false);
+        options.addPreference("media.peerconnection.enabled", false);
+        options.addPreference("browser.tabs.remote.autostart", false);
         
         // Hide navigator.webdriver and other artifacts
+        options.addArguments("--disable-blink-features=AutomationControlled");
         options.addPreference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0");
         
         return new FirefoxDriver(options);
