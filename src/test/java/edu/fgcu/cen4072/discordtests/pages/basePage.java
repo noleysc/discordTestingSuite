@@ -119,11 +119,14 @@ public abstract class BasePage {
             max = min + 100;
         }
         try {
-            Thread.sleep(random.nextInt(max - min + 1) + min);
+            // Scale up all thinking/delays by 2x to reduce request frequency
+            int delay = new java.util.Random().nextInt(max - min + 1) + min;
+            Thread.sleep(delay * 2);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
+
 
     public void clearOverlays() {
         try {

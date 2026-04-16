@@ -102,17 +102,17 @@ public class ServerSettingsPage extends BasePage {
         WebElement adminToggle = null;
         for (int i = 0; i < 5; i++) {
             adminToggle = (WebElement) ((JavascriptExecutor) driver).executeScript(
-                "const adminText = Array.from(document.querySelectorAll('span, div, label'))" +
-                ".find(el => el.textContent.trim() === 'Administrator' && el.offsetParent !== null);" +
+                "const adminText = Array.from(document.querySelectorAll('span, div, label, h3, h2'))" +
+                ".find(el => el.textContent.trim().toLowerCase() === 'administrator' && el.offsetParent !== null);" +
                 "if (!adminText) return null;" +
-                "// Find the toggle switch associated with this label, typically in the same row/container" +
-                "// Looking for a role=switch or checkbox near the text" +
-                "const container = adminText.closest('[class*=\"row\"], [class*=\"container\"], [class*=\"item\"]');" +
-                "return container ? container.querySelector('[role=\"switch\"], input[type=\"checkbox\"]') : null;"
+                "// Look for the parent container (row) and find the toggle within" +
+                "const container = adminText.closest('[class*=\"row\"], [class*=\"container\"], [class*=\"item\"], [class*=\"field\"]');" +
+                "return container ? container.querySelector('[role=\"switch\"], input[type=\"checkbox\"], input[type=\"radio\"]') : null;"
             );
             if (adminToggle != null) break;
             simulateThinking(1000, 1500);
         }
+
         
         if (adminToggle != null) {
             String state = adminToggle.getAttribute("aria-checked");
