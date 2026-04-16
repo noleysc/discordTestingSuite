@@ -27,6 +27,9 @@ public class BaseTest {
     protected WebDriverWait wait;
     protected Actions actions;
 
+    private static final boolean DEMO_MODE = false; // For demo video, flip to 'true'
+    private static final long DEMO_PAUSE_MILLIS = 2000;
+
     @BeforeMethod
     public void setUp() {
 
@@ -45,6 +48,23 @@ public class BaseTest {
     public void tearDown() {
         if (driver != null) {
             driver.quit();
+        }
+    }
+
+    protected void pause() {
+        pause(DEMO_PAUSE_MILLIS);
+    }
+
+    protected void pause(long millis) {
+        if (!DEMO_MODE) {
+            return;
+        }
+
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Demo pause was interrupted", e);
         }
     }
 }

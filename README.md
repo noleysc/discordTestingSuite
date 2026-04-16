@@ -35,8 +35,11 @@ discordTestingSuite/
 ├── src/
 │   ├── main/java/
 │   └── test/
-│       ├── java/
-│       │   └── org/example/
+│       ├── java/edu/fgcu/cen4072/discordtests/
+│       │   ├── BaseTest.java
+│       │   ├── LoginTests.java
+│       │   ├── NavigationTests.java
+│       │   └── ConfigReader.java
 │       └── resources/
 │           ├── config.example.properties
 │           └── config.properties
@@ -64,12 +67,20 @@ All test classes should extend `BaseTest`.
 ---
 
 ### LoginTests
-Handles authentication-related test cases:
-- Valid login
-- Invalid password
-- Empty input fields
-- Navigation to register page
-- Navigation to forgot password
+
+Validates Discord login page behavior, including:
+
+- Page load verification
+- Required field validation (HTML5 browser validation)
+- Input field validation (email-only, password-only cases)
+- Invalid login handling (error message detection)
+- Navigation to registration page
+- Successful login flow
+
+Notes:
+- Uses explicit waits (`WebDriverWait`) for reliability
+- Avoids unstable CAPTCHA-triggering scenarios where possible
+- Includes optional demo pauses for presentation (`DEMO_MODE`)
 
 ---
 
@@ -154,6 +165,11 @@ Although the assignment references "unit tests", this project primarily implemen
 This is due to the use of Selenium on a real-world web application.
 
 Early test classes focus on stable, low-risk UI flows (authentication and navigation) to establish a reliable testing foundation before expanding into more complex interactions.
+
+- Tests are independent (browser opens/closes per test)
+- Explicit waits are used instead of fixed delays
+- Demo mode can be enabled for presentation using a pause helper
+- Some authentication edge cases were avoided due to Discord bot detection (CAPTCHA)
 
 ---
 
