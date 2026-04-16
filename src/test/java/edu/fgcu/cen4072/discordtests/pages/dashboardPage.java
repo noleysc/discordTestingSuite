@@ -196,40 +196,38 @@ public class DashboardPage extends BasePage {
 
         logger.info("Selecting audience...");
         WebElement audience = null;
-        for (int attempt = 0; attempt < 10; attempt++) {
-            audience = (WebElement) ((JavascriptExecutor) driver).executeScript(
-                "return Array.from(document.querySelectorAll('button, [role=\"button\"], div[class*=\"container\"], [class*=\"option\"]'))" +
-                ".find(el => {" +
-                "  if (el.offsetParent === null) return false;" +
+        for (int attempt = 0; attempt < 15; attempt++) {
+            // Find option and click using JavaScript to bypass overlap/interaction issues
+            boolean clicked = (Boolean) ((JavascriptExecutor) driver).executeScript(
+                "const options = Array.from(document.querySelectorAll('button, [role=\"button\"], div[class*=\"container\"], [class*=\"option\"]'));" +
+                "const target = options.find(el => {" +
                 "  const text = el.textContent.toLowerCase();" +
                 "  return (text.includes('for me and my friends') || " +
                 "          text.includes('for a club or community') || " +
                 "          text.includes('skip this question'));" +
-                "});"
+                "});" +
+                "if (target && target.offsetParent !== null) {" +
+                "  target.click();" +
+                "  return true;" +
+                "}" +
+                "return false;"
             );
             
-            if (audience != null) {
-                logger.info("Found audience option: '{}'. Clicking...", audience.getText());
-                try {
-                    clickHumanly(audience);
-                    simulateThinking(2000, 3000);
-                    
-                    // Check if we advanced to the next screen (naming the server)
-                    boolean advanced = (Boolean) ((JavascriptExecutor) driver).executeScript(
-                        "return document.body.innerText.toLowerCase().includes('customize your server') || " +
-                        "       document.querySelectorAll('input[class*=\"input\"]').length > 0;"
-                    );
-                    if (advanced) {
-                        logger.info("Advanced to server customization screen.");
-                        break;
-                    } else {
-                        logger.warn("Click performed but screen didn't change. Retrying...");
-                    }
-                } catch (Exception e) {
-                    logger.warn("Audience click attempt {} failed: {}", attempt + 1, e.getMessage());
+            if (clicked) {
+                logger.info("Audience option clicked successfully.");
+                simulateThinking(2000, 3000);
+                
+                // Verify advancement
+                boolean advanced = (Boolean) ((JavascriptExecutor) driver).executeScript(
+                    "return document.body.innerText.toLowerCase().includes('customize your server') || " +
+                    "       document.querySelectorAll('input[class*=\"input\"]').length > 0;"
+                );
+                if (advanced) {
+                    logger.info("Advanced to server customization screen.");
+                    break;
                 }
             }
-            simulateThinking(1000, 2000);
+            simulateThinking(1500, 2500);
         }
 
         if (pfpPath != null && !pfpPath.isEmpty()) {
@@ -243,15 +241,20 @@ public class DashboardPage extends BasePage {
 
         logger.info("Finding server name input...");
         WebElement nameField = null;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             nameField = (WebElement) ((JavascriptExecutor) driver).executeScript(
-                "return Array.from(document.querySelectorAll('input'))" +
-                ".find(el => el.type !== 'file' && el.type !== 'checkbox' && el.type !== 'radio' && el.offsetParent !== null && !el.readOnly && !el.disabled && " +
-                "            (el.value.includes(\"'s server\") || el.placeholder || el.className.includes('input') || el.id.includes('uid')) " +
+                "// 1. Try to find the input within the active modal\n" +
+                "const modal = document.querySelector('div[role=\"dialog\"], [class*=\"modal\"]');\n" +
+                "let input = modal ? modal.querySelector('input[type=\"text\"], input[class*=\"input\"]') : null;\n" +
+                "if (input && input.offsetParent !== null) return input;\n" +
+                "// 2. Global search as fallback\n" +
+                "return Array.from(document.querySelectorAll('input'))\n" +
+                ".find(el => el.offsetParent !== null && !el.readOnly && !el.disabled && \n" +
+                "            ((el.placeholder && el.placeholder.toLowerCase().includes('server name')) || el.className.includes('input')) \n" +
                 "            && !el.name.toLowerCase().includes('friend') && !el.id.toLowerCase().includes('friend'));"
             );
             if (nameField != null) break;
-            simulateThinking(500, 1000);
+            simulateThinking(1000, 1500);
         }
 
         if (nameField == null) {
