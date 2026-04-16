@@ -19,15 +19,6 @@ public class UserSettingsTests extends BaseTest {
     private DashboardPage dashboard;
     private final Random random = new Random();
 
-    @BeforeClass
-    public void prepareUserSettings() {
-        logger.info("Preparing UserSettingsTests...");
-        if (dashboard == null) {
-            dashboard = new DashboardPage(getDriver());
-        }
-        dashboard.ensureHydrated();
-    }
-
     @Test(priority = 1, description = "Mute the user from dashboard")
     @Severity(SeverityLevel.NORMAL)
     public void testMuteUser() {
