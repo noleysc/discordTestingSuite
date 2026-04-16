@@ -20,17 +20,11 @@ public class UserSettingsTests extends BaseTest {
     private final Random random = new Random();
 
     @BeforeClass
-    public void loginAndPrepare() {
-        logger.info("Logging in for UserSettingsTests...");
-        if (getDriver().getCurrentUrl().contains("channels/@me")) {
-            logger.info("Already on dashboard, skipping login navigation.");
-        } else {
-            getDriver().get("https://discord.com/login");
+    public void prepareUserSettings() {
+        logger.info("Preparing UserSettingsTests...");
+        if (dashboard == null) {
+            dashboard = new DashboardPage(getDriver());
         }
-
-        LoginPage login = new LoginPage(getDriver());
-        login.login(loginIdentifier, loginPassword);
-        dashboard = new DashboardPage(getDriver());
         dashboard.ensureHydrated();
     }
 

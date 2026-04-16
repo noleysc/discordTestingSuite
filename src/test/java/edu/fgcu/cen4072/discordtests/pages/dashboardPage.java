@@ -559,40 +559,32 @@ public class DashboardPage extends BasePage {
         clickHumanly(avatar);
         simulateThinking(1500, 2500);
 
-        // Look for the status menu item directly
-        WebElement statusMenu = (WebElement) ((JavascriptExecutor) driver).executeScript(
-            "return Array.from(document.querySelectorAll('[id*=\"status-picker\"] [class*=\"item\"], [role=\"menuitem\"]'))" +
-            ".find(el => el.textContent.toLowerCase().includes(arguments[0].toLowerCase()) && el.offsetParent !== null);",
-            status
+        // Find the status submenu trigger
+        WebElement subMenuTrigger = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "return Array.from(document.querySelectorAll('[role=\"menuitem\"], [role=\"menuitemradio\"]'))" +
+            ".find(el => el.textContent.toLowerCase().includes('online') || " +
+            "            el.textContent.toLowerCase().includes('idle') || " +
+            "            el.textContent.toLowerCase().includes('do not disturb') || " +
+            "            el.textContent.toLowerCase().includes('invisible'));"
         );
-
-        if (statusMenu == null) {
-            logger.info("Direct status menu item not found, attempting to find 'Set Status' or similar submenu trigger...");
-            WebElement subMenuTrigger = (WebElement) ((JavascriptExecutor) driver).executeScript(
-                "return Array.from(document.querySelectorAll('[role=\"menuitem\"]'))" +
-                ".find(el => (el.textContent.toLowerCase().includes('online') || el.textContent.toLowerCase().includes('idle') || " +
-                "            el.textContent.toLowerCase().includes('do not disturb') || el.textContent.toLowerCase().includes('invisible')) && " +
-                "            el.offsetParent !== null);"
+        
+        if (subMenuTrigger != null) {
+            logger.info("Status menu opened, selecting: {}", status);
+            WebElement statusMenu = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                "return Array.from(document.querySelectorAll('[role=\"menuitem\"], [role=\"menuitemradio\"]'))" +
+                ".find(el => el.textContent.toLowerCase().includes(arguments[0].toLowerCase()) && el.offsetParent !== null);",
+                status
             );
-            if (subMenuTrigger != null) {
-                clickHumanly(subMenuTrigger);
-                simulateThinking(1000, 2000);
-                statusMenu = (WebElement) ((JavascriptExecutor) driver).executeScript(
-                    "return Array.from(document.querySelectorAll('[role=\"menuitem\"], [id*=\"status-picker\"] [class*=\"item\"]'))" +
-                    ".find(el => el.textContent.toLowerCase().includes(arguments[0].toLowerCase()) && el.offsetParent !== null);",
-                    status
-                );
+            if (statusMenu != null) {
+                clickHumanly(statusMenu);
+                simulateThinking(2000, 3000);
+            } else {
+                logger.error("Could not find status item: {}", status);
+                throw new NoSuchElementException("Status item not found: " + status);
             }
-        }
-
-        if (statusMenu != null) {
-            logger.info("Found status menu item, clicking: {}", status);
-            clickHumanly(statusMenu);
-            simulateThinking(2000, 3000);
         } else {
-            // Save screenshot or log DOM for debugging
-            logger.error("Failed to find status menu item for: {}", status);
-            throw new NoSuchElementException("Could not find status menu item for: " + status);
+            logger.error("Status menu failed to open.");
+            throw new NoSuchElementException("Status menu trigger not found.");
         }
     }
 
