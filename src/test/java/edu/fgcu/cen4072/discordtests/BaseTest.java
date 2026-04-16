@@ -38,8 +38,8 @@ public class BaseTest {
 
     private void initDriver() {
         // Add a short delay to cool down
-        logger.warn("Cooldown delay: waiting 5 seconds before initializing driver...");
-        try { Thread.sleep(5000); } catch (InterruptedException ignore) {}
+        logger.warn("Cooldown delay: waiting 2 seconds before initializing driver...");
+        try { Thread.sleep(2000); } catch (InterruptedException ignore) {}
 
         driverThreadLocal.set(initFirefox());
         getDriver().manage().window().maximize();
