@@ -27,7 +27,7 @@ public class BaseTest {
     protected WebDriverWait wait;
     protected Actions actions;
 
-    private static final boolean DEMO_MODE = false; // For demo video, flip to 'true'
+    private static final boolean DEMO_MODE = true; // For demo video, flip to 'true'
     private static final long DEMO_PAUSE_MILLIS = 2000;
 
     @BeforeMethod
