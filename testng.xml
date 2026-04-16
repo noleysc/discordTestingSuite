@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="Discord Testing Suite">
-    <test name="Login Tests">
+    <test name="Authentication and Navigation Tests">
         <classes>
             <class name="edu.fgcu.cen4072.discordtests.LoginTests"/>
+            <class name="edu.fgcu.cen4072.discordtests.NavigationTests"/>
         </classes>
     </test>
 </suite>

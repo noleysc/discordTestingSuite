@@ -73,6 +73,15 @@ Handles authentication-related test cases:
 
 ---
 
+### NavigationTests
+Covers navigation and routing behavior across Discord’s public authentication pages:
+- Login page load verification
+- Register page navigation
+- Login/register page transitions
+- Presence of key UI elements
+
+---
+
 ### ConfigReader
 Loads local test configuration values from `src/test/resources/config.properties`.
 
@@ -83,7 +92,7 @@ This is used to keep test credentials and environment-specific values out of the
 
 ## Planned Test Classes (Minimum Requirement)
 
-The project will include at least 8 test classes:
+The project includes and will expand to at least 8 test classes:
 
 1. LoginTests
 2. NavigationTests
@@ -143,6 +152,8 @@ Although the assignment references "unit tests", this project primarily implemen
 - **Integration via TestNG suite**
 
 This is due to the use of Selenium on a real-world web application.
+
+Early test classes focus on stable, low-risk UI flows (authentication and navigation) to establish a reliable testing foundation before expanding into more complex interactions.
 
 ---
 
@@ -209,6 +220,8 @@ Work should be done in feature branches and merged when stable.
 - Test execution verified (5/5 passing)
 - Environment confirmed working
 - Package structure refactored to `edu.fgcu.cen4072.discordtests`
+- NavigationTests implemented and integrated into TestNG suite
+- TestNG suite updated to run multiple test classes (Login + Navigation)
 
 ---
 
