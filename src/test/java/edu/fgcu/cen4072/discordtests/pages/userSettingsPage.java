@@ -65,11 +65,10 @@ public class UserSettingsPage extends BasePage {
                     nameInput = (WebElement) ((JavascriptExecutor) driver).executeScript(
                         "return document.querySelector('input[name=\"global_name\"]') || " +
                         "       document.querySelector('input[name=\"display_name\"]') || " +
-                        "       document.querySelector('input[class*=\"input__0f084\"]') || " +
+                        "       document.querySelector('input[class*=\"input__\"]') || " +
                         "       Array.from(document.querySelectorAll('input')).find(el => {" +
                         "         const aria = el.getAttribute('aria-label') || '';" +
                         "         const placeholder = el.placeholder || '';" +
-                        "         const text = el.textContent.toLowerCase();" +
                         "         return (aria.toLowerCase().includes('display name') || " +
                         "                 placeholder.toLowerCase().includes('display name')) && " +
                         "                 el.offsetParent !== null;" +
