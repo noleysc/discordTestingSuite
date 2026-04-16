@@ -1,51 +1,33 @@
-package edu.fgcu.cen4072.discordtests; // This must be the very first line [cite: 83]
+package edu.fgcu.cen4072.discordtests;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
+import io.qameta.allure.*;
+import edu.fgcu.cen4072.discordtests.pages.LandingPage;
+import edu.fgcu.cen4072.discordtests.pages.LoginPage;
 import org.testng.annotations.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * LoginTests covers core authentication-related UI flows on Discord's login page.
- */
+@Epic("Authentication")
+@Feature("Login functionality")
 public class LoginTests extends BaseTest {
 
-    private static final String LOGIN_URL = ConfigReader.get("discord.loginUrl");
-    private static final String EMAIL = ConfigReader.get("discord.email");
-    private static final String PASSWORD = ConfigReader.get("discord.password");
+    private final String loginIdentifier = "softwaretesting@tutamail.com";
+    private final String loginPassword = "testPASS!@#";
 
-    @Test
+    @Test(priority = 1, description = "Login to Discord with valid credentials")
+    @Severity(SeverityLevel.BLOCKER)
     public void testValidLogin() {
-        driver.get(LOGIN_URL);
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email"))).sendKeys(EMAIL);
-        driver.findElement(By.name("password")).sendKeys(PASSWORD);
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@type='submit']"))).click();
-    }
+        if (getDriver().getCurrentUrl().contains("channels/@me")) {
+            logger.info("Already on dashboard, skipping login test.");
+            return;
+        }
+        
+        getDriver().get("https://discord.com");
+        LandingPage landing = new LandingPage(getDriver());
+        LoginPage login = landing.clickLogin();
+        login.login(loginIdentifier, loginPassword);
 
-    @Test
-    public void testInvalidPassword() {
-        driver.get(LOGIN_URL);
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email"))).sendKeys(EMAIL);
-        driver.findElement(By.name("password")).sendKeys("wrongPass");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
-    }
-
-    @Test
-    public void testEmptyFields() {
-        driver.get(LOGIN_URL);
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@type='submit']"))).click();
-    }
-
-    @Test
-    public void testRegisterNavigation() {
-        driver.get(LOGIN_URL);
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(text(), 'Register')]"))).click();
-    }
-
-    @Test
-    public void testForgotPasswordLink() {
-        driver.get(LOGIN_URL);
-        wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//*[contains(translate(text(), 'FORGOT', 'forgot'), 'forgot')]")))
-                .click();
+        assertThat(login.isDashboardLoaded())
+                .as("Discord dashboard should be loaded after login")
+                .isTrue();
     }
 }

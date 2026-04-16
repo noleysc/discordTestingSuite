@@ -37,3 +37,8 @@ build/
 
 # Local test credentials/config (do not commit real values)
 src/test/resources/config.properties
+
+# Automation Output
+AutomationProfile/
+allure-results/
+target/screenshots/
