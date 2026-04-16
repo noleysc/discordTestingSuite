@@ -12,7 +12,7 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Epic("Authentication")
-<<<<<<< Updated upstream:src/test/java/edu/fgcu/cen4072/discordtests/PostAuthChromeTests.java
+
 @Feature("Negative Login functionality")
 public class PostAuthChromeTests extends BaseTest {
 

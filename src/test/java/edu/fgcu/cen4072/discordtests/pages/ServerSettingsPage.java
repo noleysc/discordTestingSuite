@@ -1,10 +1,6 @@
 package edu.fgcu.cen4072.discordtests.pages;
 
 import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-
-import java.time.Duration;
 
 public class ServerSettingsPage extends BasePage {
 
@@ -95,6 +91,7 @@ public class ServerSettingsPage extends BasePage {
         if (searchInput != null) {
             clickHumanly(searchInput);
             typeHumanly(searchInput, "Administrator");
+            // Some UIs require a pause after typing for the results to render.
             simulateThinking(2000, 3000);
         }
 
@@ -102,12 +99,13 @@ public class ServerSettingsPage extends BasePage {
         WebElement adminToggle = null;
         for (int i = 0; i < 5; i++) {
             adminToggle = (WebElement) ((JavascriptExecutor) driver).executeScript(
-                "const adminText = Array.from(document.querySelectorAll('span, div, label, h3, h2'))" +
-                ".find(el => el.textContent.trim().toLowerCase() === 'administrator' && el.offsetParent !== null);" +
+                "const candidates = Array.from(document.querySelectorAll('span, div, label, h3, h2, p, button, strong'))" +
+                ".filter(el => el && el.offsetParent !== null && el.textContent && el.textContent.toLowerCase().includes('administrator'));" +
+                "const adminText = candidates.length ? candidates[0] : null;" +
                 "if (!adminText) return null;" +
                 "// Look for the parent container (row) and find the toggle within" +
-                "const container = adminText.closest('[class*=\"row\"], [class*=\"container\"], [class*=\"item\"], [class*=\"field\"]');" +
-                "return container ? container.querySelector('[role=\"switch\"], input[type=\"checkbox\"], input[type=\"radio\"]') : null;"
+                "const container = adminText.closest('[class*=\"row\"], [class*=\"container\"], [class*=\"item\"], [class*=\"field\"], [role=\"row\"], [role=\"group\"]') || adminText.parentElement;" +
+                "return container ? container.querySelector('[role=\"switch\"], input[type=\"checkbox\"], input[type=\"radio\"], [aria-checked]') : null;"
             );
             if (adminToggle != null) break;
             simulateThinking(1000, 1500);
@@ -116,12 +114,12 @@ public class ServerSettingsPage extends BasePage {
         
         if (adminToggle != null) {
             String state = adminToggle.getAttribute("aria-checked");
-            if ("false".equals(state) || state == null) {
+            logger.info("Administrator toggle found (aria-checked: {}).", state);
+            // Click if it's clearly off, otherwise just click once to be safe.
+            if (state == null || "false".equalsIgnoreCase(state) || "0".equals(state)) {
                 logger.info("Clicking Administrator toggle...");
                 clickHumanly(adminToggle);
                 simulateThinking(2000, 3000);
-            } else {
-                logger.info("Administrator permission already enabled (state: {}).", state);
             }
         } else {
             logger.error("Administrator toggle NOT found!");

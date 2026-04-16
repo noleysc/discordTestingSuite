@@ -35,6 +35,11 @@ build/
 ### Mac OS ###
 .DS_Store
 
+# Node / frontend artifacts (do not commit)
+node_modules/
+package-lock.json
+package.json
+
 # Local test credentials/config (do not commit real values)
 src/test/resources/config.properties
 

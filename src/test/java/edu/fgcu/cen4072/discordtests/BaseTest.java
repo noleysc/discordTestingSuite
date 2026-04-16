@@ -39,9 +39,9 @@ public class BaseTest {
 
     private void initDriver() {
         // Add a short delay to cool down
-        logger.warn("Cooldown delay: waiting 5 seconds before initializing driver...");
+        logger.warn("Cooldown delay: waiting 2 seconds before initializing driver...");
         try {
-            Thread.sleep(5000);
+            Thread.sleep(2000);
         } catch (InterruptedException ignore) {
         }
 
@@ -61,11 +61,11 @@ public class BaseTest {
         FirefoxOptions options = new FirefoxOptions();
 
         // Use the explicit binary path provided by the user
-        String firefoxPath = "C:\Program Files\Mozilla Firefox\firefox.exe";
+        String firefoxPath = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
         options.setBinary(firefoxPath);
 
         // Use a stable profile for persistent session
-        String testProfilePath = System.getProperty("user.dir") + "\AutomationProfile\Firefox_Main_Session";
+        String testProfilePath = System.getProperty("user.dir") + "\\AutomationProfile\\Firefox_Main_Session";
         File profileDir = new File(testProfilePath);
         if (profileDir.exists()) {
             logger.info("Clearing previous session cache at: {}", testProfilePath);
@@ -87,8 +87,12 @@ public class BaseTest {
         options.addPreference("permissions.default.desktop-notification", 1);
         options.addPreference("permissions.default.camera", 1);
         options.addPreference("permissions.default.microphone", 1);
-        options.addPreference("media.navigator.permission.disabled", true);
-        options.addPreference("media.navigator.streams.fake", true);
+        // Some Firefox/WebRTC flows request "audio-capture" instead of "microphone".
+        options.addPreference("permissions.default.audio-capture", 1);
+        // Allow real microphone/audio device access (no fake streams).
+        // This avoids Discord "mic/headphones" permission blocks during automated calls.
+        options.addPreference("media.navigator.permission.disabled", false);
+        options.addPreference("media.navigator.streams.fake", false);
         
         // Anti-bot/Anti-Desktop-App detection
         options.addPreference("dom.webdriver.enabled", false);

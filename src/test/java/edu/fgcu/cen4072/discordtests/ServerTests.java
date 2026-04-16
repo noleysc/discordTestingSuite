@@ -1,9 +1,7 @@
 package edu.fgcu.cen4072.discordtests;
 
 import io.qameta.allure.*;
-<<<<<<< Updated upstream:src/test/java/edu/fgcu/cen4072/discordtests/ServerTests.java
 import edu.fgcu.cen4072.discordtests.pages.DashboardPage;
-import edu.fgcu.cen4072.discordtests.pages.LoginPage;
 import edu.fgcu.cen4072.discordtests.pages.ServerSettingsPage;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -15,22 +13,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Epic("Server Management")
 @Feature("Server Lifecycle")
 public class ServerTests extends BaseTest {
-    private final String loginIdentifier = "softwaretesting@tutamail.com";
-    private final String loginPassword = "testPASS!@#";
     private String serverName;
-    private final String pfpPath = null;
+    private final String pfpPath = null; // System.getProperty("user.dir") + "/logo.png";
     private DashboardPage dashboard;
     private final Random random = new Random();
 
+
     @BeforeClass
-    public void prepareServerTests() {
+    public void prepareServer() {
         serverName = "Nexus Lab " + (random.nextInt(899) + 100);
         logger.info("Starting ServerTests with server name: {}", serverName);
-
-        if (dashboard == null) {
-            dashboard = new DashboardPage(getDriver());
-        }
-        dashboard.ensureHydrated();
+        dashboard = new DashboardPage(getDriver());
+        dashboard.ensureHydrated(); // relies on earlier LoginTests in the suite order
     }
 
     @Test(priority = 1, description = "Create a new Discord server")
@@ -60,21 +54,15 @@ public class ServerTests extends BaseTest {
         dashboard.createChannel(channelName, true);
     }
 
-    @Test(priority = 4, dependsOnMethods = "testCreateVoiceChannel", description = "Create a new server role")
-    @Severity(SeverityLevel.NORMAL)
-    public void testCreateRole() {
+    @Test(priority = 4, dependsOnMethods = "testCreateVoiceChannel", description = "Create a role and enable Administrator permission")
+    @Severity(SeverityLevel.CRITICAL)
+    public void testConfigureServerRoles() {
         ServerSettingsPage settings = dashboard.openServerSettings(serverName);
         settings.createRole("Lead Architect");
-    }
-
-    @Test(priority = 5, dependsOnMethods = "testCreateRole", description = "Enable Administrator permission for a role")
-    @Severity(SeverityLevel.CRITICAL)
-    public void testEnableAdminPermission() {
-        ServerSettingsPage settings = dashboard.openServerSettings(serverName);
         settings.enableAdministratorPermission();
     }
 
-    @Test(priority = 6, dependsOnMethods = "testEnableAdminPermission", description = "Delete the server to clean up")
+    @Test(priority = 5, dependsOnMethods = "testConfigureServerRoles", description = "Delete the server to clean up")
     @Severity(SeverityLevel.NORMAL)
     public void testDeleteServer() {
         ServerSettingsPage settings = dashboard.openServerSettings(serverName);

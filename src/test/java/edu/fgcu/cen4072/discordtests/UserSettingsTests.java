@@ -77,8 +77,8 @@ public class UserSettingsTests extends BaseTest {
     @Test(priority = 5, description = "Modify User Avatar")
     @Severity(SeverityLevel.NORMAL)
     public void testUpdateAvatar() {
-        logger.info("Waiting 10 seconds before avatar update to respect rate limits...");
-        simulateThinking(10000, 11000);
+        logger.info("Waiting 5 seconds before avatar update to respect rate limits...");
+        simulateThinking(5000, 6500);
         
         UserSettingsPage userSettings = dashboard.openUserSettings();
         

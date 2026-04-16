@@ -45,7 +45,7 @@ public abstract class BasePage {
             ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});", element
             );
-            simulateThinking(800, 1200);
+            simulateThinking(500, 900);
 
             // 2. Perform Selenium Actions click
             int xOffset = (int) (element.getRect().getWidth() * (0.3 + random.nextDouble() * 0.4));
@@ -76,20 +76,20 @@ public abstract class BasePage {
 
     protected void typeHumanly(WebElement element, String text) {
         logger.debug("Performing Gaussian typing for: {}", text);
-        simulateThinking(600, 1200);
+        simulateThinking(400, 800);
 
         for (int i = 0; i < text.length(); i++) {
             char ch = text.charAt(i);
             
             // 2% chance of a "hesitation" pause
-            if (random.nextInt(100) < 2) simulateThinking(400, 800);
+            if (random.nextInt(100) < 2) simulateThinking(250, 550);
             
             // 1% chance of a typo on long strings
             if (text.length() > 5 && random.nextInt(100) < 1 && Character.isLetterOrDigit(ch)) {
                 element.sendKeys(String.valueOf((char)(ch + 1)));
-                simulateThinking(100, 250);
+                simulateThinking(70, 180);
                 element.sendKeys(Keys.BACK_SPACE);
-                simulateThinking(150, 350);
+                simulateThinking(100, 250);
             }
 
             element.sendKeys(String.valueOf(ch));
@@ -99,7 +99,7 @@ public abstract class BasePage {
             simulateThinking((int) Math.max(45, delay), (int) delay + 30);
 
             // Longer pause after punctuation or spaces
-            if (ch == ' ' || ch == '.' || ch == '-') simulateThinking(150, 450);
+            if (ch == ' ' || ch == '.' || ch == '-') simulateThinking(100, 300);
         }
     }
 
@@ -119,9 +119,12 @@ public abstract class BasePage {
             max = min + 100;
         }
         try {
-            // Scale up all thinking/delays by 2x to reduce request frequency
+            // Human pacing: keep delays noticeable, but avoid excessively long runs.
             int delay = new java.util.Random().nextInt(max - min + 1) + min;
-            Thread.sleep(delay * 2);
+            long sleepMs = Math.round(delay * 1.5);
+            // Prevent pathological long sleeps from accumulating across tests.
+            sleepMs = Math.min(2500, sleepMs);
+            Thread.sleep(sleepMs);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

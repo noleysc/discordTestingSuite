@@ -5,6 +5,7 @@ import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.List;
 
@@ -19,7 +20,8 @@ public class DashboardPage extends BasePage {
     @FindBy(css = "input[type='file']")
     private WebElement fileInput;
 
-    @FindBy(css = "input[class*='inputDefault']")
+    // Server name input (exclude file inputs to avoid Selenium trying to "type" a file picker)
+    @FindBy(css = "input[class*='inputDefault']:not([type='file'])")
     private WebElement nameInput;
 
     @FindBy(css = "button[type='submit']")
@@ -42,8 +44,8 @@ public class DashboardPage extends BasePage {
     public void ensureHydrated() {
         injectStealth();
         try {
-            logger.info("Waiting for dashboard hydration (60s)... Current URL: " + driver.getCurrentUrl());
-            new WebDriverWait(driver, Duration.ofSeconds(60)).until(d -> (Boolean) ((JavascriptExecutor) d).executeScript(
+            logger.info("Waiting for dashboard hydration (45s)... Current URL: " + driver.getCurrentUrl());
+            new WebDriverWait(driver, Duration.ofSeconds(45)).until(d -> (Boolean) ((JavascriptExecutor) d).executeScript(
                 "return document.querySelectorAll('nav.guilds__5e434, [aria-label=\"Servers\"], [class*=\"guilds\"], [class*=\"appAsidePanelWrapper\"]').length > 0"
             ));
             cleanUpPhantomServers();
@@ -56,9 +58,9 @@ public class DashboardPage extends BasePage {
             
             logger.info("Refreshing and attempting final hydration...");
             driver.navigate().refresh();
-            simulateThinking(5000, 8000);
+            simulateThinking(2500, 5000);
             
-            new WebDriverWait(driver, Duration.ofSeconds(60)).until(d -> (Boolean) ((JavascriptExecutor) d).executeScript(
+            new WebDriverWait(driver, Duration.ofSeconds(45)).until(d -> (Boolean) ((JavascriptExecutor) d).executeScript(
                 "return document.querySelectorAll('nav.guilds__5e434, [aria-label=\"Servers\"], [class*=\"guilds\"]').length > 0"
             ));
             cleanUpPhantomServers();
@@ -178,19 +180,60 @@ public class DashboardPage extends BasePage {
 
     public void createServer(String name, String pfpPath) {
         logger.info("Selecting 'Create My Own' template...");
-        WebElement template = null;
-        for (int i = 0; i < 10; i++) {
-            template = (WebElement) ((JavascriptExecutor) driver).executeScript(
-                "return Array.from(document.querySelectorAll('button, [role=\"button\"], div[class*=\"container\"]'))" +
-                ".find(el => el.textContent.toLowerCase().includes('create my own'));"
+        boolean templateSelected = false;
+        for (int i = 0; i < 15; i++) {
+            templateSelected = (Boolean) ((JavascriptExecutor) driver).executeScript(
+                "const priority = 'create my own';" +
+                "const fallbacks = ['create a server', 'start from a template'];" +
+                "const modal = document.querySelector('div[role=\"dialog\"], [class*=\"modal\"], [role=\"dialog\"]') || document.body;" +
+                "const candidates = Array.from(modal.querySelectorAll('button, [role=\"button\"], div[role=\"menuitem\"], label, span, div')); " +
+                "function isVisible(el){ const r = el.getBoundingClientRect(); return !!r && r.width > 0 && r.height > 0; }" +
+                "function looksLikeAudienceStep(){ " +
+                "  const t = (modal.innerText || document.body.innerText || '').toLowerCase();" +
+                "  const hasText = t.includes('for me and my friends') || t.includes('for a club or community') || t.includes('skip this question');" +
+                "  const hasUi = modal.querySelector('[class*=\"optionsList\" i]') || modal.querySelector('[class*=\"skip__\" i]') || document.querySelector('[class*=\"optionsList\" i]') || document.querySelector('[class*=\"skip__\" i]');" +
+                "  return !!hasText && !!hasUi;" +
+                "}" +
+                "let target = candidates.find(el => {" +
+                "  if (!el) return false;" +
+                "  if (!isVisible(el)) return false;" +
+                "  const text = (el.textContent || '').toLowerCase();" +
+                "  const aria = (el.getAttribute('aria-label') || '').toLowerCase();" +
+                "  return text.includes(priority) || aria.includes(priority);" +
+                "});" +
+                "if (!target) {" +
+                "  target = candidates.find(el => {" +
+                "    if (!el) return false;" +
+                "    if (!isVisible(el)) return false;" +
+                "    const text = (el.textContent || '').toLowerCase();" +
+                "    const aria = (el.getAttribute('aria-label') || '').toLowerCase();" +
+                "    return fallbacks.some(k => text.includes(k) || aria.includes(k));" +
+                "  });" +
+                "}" +
+                "if (target) {" +
+                "  const clickable = target.closest('button,[role=\"button\"],div[role=\"menuitem\"],a') || target;" +
+                "  try { clickable.scrollIntoView({block:'center'}); } catch(e) {}" +
+                "  try { clickable.focus && clickable.focus(); } catch(e) {}" +
+                "  try { clickable.click(); } catch(e) {" +
+                "    try {" +
+                "      clickable.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));" +
+                "      clickable.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));" +
+                "      clickable.dispatchEvent(new MouseEvent('click', { bubbles: true }));" +
+                "    } catch(e2) {}" +
+                "  }" +
+                "  // Only succeed if UI advanced to audience step" +
+                "  return looksLikeAudienceStep();" +
+                "}" +
+                "return false;"
             );
-            if (template != null) break;
+            if (templateSelected) {
+                logger.info("Create My Own template step advanced (attempt {}).", i + 1);
+                simulateThinking(500, 1000);
+                break;
+            }
             simulateThinking(500, 1000);
         }
-        if (template != null) {
-            clickHumanly(template);
-            simulateThinking(500, 1000);
-        } else {
+        if (!templateSelected) {
             logger.info("Template option not found, skipping.");
         }
 
@@ -198,18 +241,26 @@ public class DashboardPage extends BasePage {
         boolean selected = false;
         for (int attempt = 0; attempt < 15; attempt++) {
             // Find and interact with option
-            String script = 
-                "const options = Array.from(document.querySelectorAll('button, [role=\"button\"], div[class*=\"container\"], [class*=\"option\"]'));" +
-                "const target = options.find(el => {" +
-                "  const text = el.textContent.toLowerCase();" +
-                "  return (text.includes('for me and my friends') || " +
-                "          text.includes('for a club or community') || " +
-                "          text.includes('skip this question'));" +
-                "});" +
-                "if (target && target.offsetParent !== null) {" +
+            String script =
+                "const priority = 'skip this question for now';" +
+                "const keywords = ['for me and my friends','for a club or community','skip this question for now','skip this question','skip'];" +
+                "const options = Array.from(document.querySelectorAll('button, [role=\"button\"], div[role=\"radio\"], [role=\"menuitemradio\"], label, div[class*=\"container\"], [class*=\"option\"], [role=\"menuitem\"]'));" +
+                "function findVisible(predicate) {" +
+                "  for (const el of options) {" +
+                "    if (!el) continue;" +
+                "    const r = el.getBoundingClientRect();" +
+                "    if (!r || r.width === 0 || r.height === 0) continue;" +
+                "    const text = (el.textContent || '').toLowerCase();" +
+                "    if (predicate(text)) return el;" +
+                "  }" +
+                "  return null;" +
+                "}" +
+                "let target = findVisible((text) => text.includes(priority));" +
+                "if (!target) target = findVisible((text) => keywords.some(k => text.includes(k)));" +
+                "if (target) {" +
                 "  target.scrollIntoView({block: 'center'});" +
-                "  // Try direct click first, then force if needed" +
-                "  try { target.click(); } catch(e) { target.dispatchEvent(new MouseEvent('click', { bubbles: true })); }" +
+                "  const clickable = target.closest('button,[role=\"button\"],div[role=\"radio\"],[role=\"menuitemradio\"],label') || target;" +
+                "  try { clickable.click(); } catch(e) { clickable.dispatchEvent(new MouseEvent('click', { bubbles: true })); }" +
                 "  return true;" +
                 "}" +
                 "return false;";
@@ -223,7 +274,7 @@ public class DashboardPage extends BasePage {
                 // Verify advancement
                 boolean advanced = (Boolean) ((JavascriptExecutor) driver).executeScript(
                     "return document.body.innerText.toLowerCase().includes('customize your server') || " +
-                    "       document.querySelectorAll('input[class*=\"input\"]').length > 0;"
+                    "       document.querySelectorAll('input[type=\"text\"], input[class*=\"input\"], input[placeholder*=\"server name\" i]').length > 0;"
                 );
                 if (advanced) {
                     logger.info("Advanced to server customization screen.");
@@ -236,11 +287,20 @@ public class DashboardPage extends BasePage {
         }
 
         if (pfpPath != null && !pfpPath.isEmpty()) {
-            try {
-                fileInput.sendKeys(pfpPath);
-                simulateThinking(300, 700);
-            } catch (Exception e) {
-                logger.warn("Could not upload PFP: {}", e.getMessage());
+            String cleanedPath = pfpPath.trim();
+            if (cleanedPath.startsWith("\"") && cleanedPath.endsWith("\"") && cleanedPath.length() > 1) {
+                cleanedPath = cleanedPath.substring(1, cleanedPath.length() - 1);
+            }
+            File pfpFile = new File(cleanedPath);
+            if (pfpFile.exists()) {
+                try {
+                    fileInput.sendKeys(pfpFile.getAbsolutePath());
+                    simulateThinking(300, 700);
+                } catch (Exception e) {
+                    logger.warn("Could not upload PFP: {}", e.getMessage());
+                }
+            } else {
+                logger.warn("PFP path does not exist, skipping upload. path='{}'", cleanedPath);
             }
         }
 
@@ -250,13 +310,14 @@ public class DashboardPage extends BasePage {
             nameField = (WebElement) ((JavascriptExecutor) driver).executeScript(
                 "// 1. Try to find the input within the active modal\n" +
                 "const modal = document.querySelector('div[role=\"dialog\"], [class*=\"modal\"]');\n" +
-                "let input = modal ? modal.querySelector('input[type=\"text\"], input[class*=\"input\"]') : null;\n" +
+                "let input = modal ? modal.querySelector('input[type=\"text\"], textarea') : null;\n" +
                 "if (input && input.offsetParent !== null) return input;\n" +
                 "// 2. Global search as fallback\n" +
                 "return Array.from(document.querySelectorAll('input'))\n" +
+                ".filter(el => (el.type || '').toLowerCase() !== 'file')\n" +
                 ".find(el => el.offsetParent !== null && !el.readOnly && !el.disabled && \n" +
-                "            ((el.placeholder && el.placeholder.toLowerCase().includes('server name')) || el.className.includes('input')) \n" +
-                "            && !el.name.toLowerCase().includes('friend') && !el.id.toLowerCase().includes('friend'));"
+                "            ((el.placeholder && el.placeholder.toLowerCase().includes('server name')) || el.className.includes('input') || (el.getAttribute('aria-label')||'').toLowerCase().includes('server')) \n" +
+                "            && !((el.name||'').toLowerCase().includes('friend')) && !((el.id||'').toLowerCase().includes('friend')));"
             );
             if (nameField != null) break;
             simulateThinking(1000, 1500);

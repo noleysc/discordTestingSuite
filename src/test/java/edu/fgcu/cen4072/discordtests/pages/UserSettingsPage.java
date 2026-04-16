@@ -1,7 +1,6 @@
 package edu.fgcu.cen4072.discordtests.pages;
 
 import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
@@ -278,6 +277,17 @@ public class UserSettingsPage extends BasePage {
             "if (labelText.includes('display name')) {\n" +
             "  const el = document.querySelector('input[name=\"global_name\"]') || document.querySelector('input[name=\"display_name\"]');\n" +
             "  if (el) return el.value;\n" +
+            "}\n" +
+            "if (labelText.includes('pronouns')) {\n" +
+            "  const direct = document.querySelector('input[name=\"pronouns\"]') || document.querySelector('textarea[name=\"pronouns\"]');\n" +
+            "  if (direct) return direct.value;\n" +
+            "  const input = Array.from(document.querySelectorAll('input, textarea')).find(el => {\n" +
+            "    const aria = (el.getAttribute('aria-label') || '').toLowerCase();\n" +
+            "    const placeholder = (el.placeholder || '').toLowerCase();\n" +
+            "    const name = (el.getAttribute('name') || '').toLowerCase();\n" +
+            "    return aria.includes('pronouns') || placeholder.includes('pronouns') || name.includes('pronouns');\n" +
+            "  });\n" +
+            "  if (input) return input.value;\n" +
             "}\n" +
             "const allElements = Array.from(document.querySelectorAll('h2, h3, div, label, span, [class*=\"title\"]'));" +
             "const targetLabel = allElements.find(el => el.textContent.toLowerCase().trim() === labelText || el.innerText.toLowerCase().includes(labelText));" +
