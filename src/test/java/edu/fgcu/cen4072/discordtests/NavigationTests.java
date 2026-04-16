@@ -30,7 +30,7 @@ public class NavigationTests extends BaseTest {
     @Test
     public void testRegisterLinkNavigatesToSignup() {
         getDriver().get(LOGIN_URL);
-        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(10));
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(5));
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[contains(text(), 'Register')]"))).click();
         wait.until(ExpectedConditions.urlContains("/register"));
         Assert.assertTrue(getDriver().getCurrentUrl().contains("/register"));
@@ -39,7 +39,7 @@ public class NavigationTests extends BaseTest {
     @Test
     public void testRegisterPageLogInButtonNavigatesToLogin() {
         getDriver().get("https://discord.com/register");
-        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(10));
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(5));
         wait.until(ExpectedConditions.elementToBeClickable(
                 By.xpath("//button[.//span[contains(text(), 'Already have an account? Log in')]]")))
                 .click();
@@ -49,7 +49,7 @@ public class NavigationTests extends BaseTest {
     @Test
     public void testLoginFieldsArePresent() {
         getDriver().get(LOGIN_URL);
-        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(10));
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(5));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.name("email")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.name("password")));
         Assert.assertTrue(getDriver().findElement(By.name("email")).isDisplayed());
