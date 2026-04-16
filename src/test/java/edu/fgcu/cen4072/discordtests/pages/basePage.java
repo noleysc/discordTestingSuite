@@ -1,5 +1,6 @@
 package edu.fgcu.cen4072.discordtests.pages;
 
+import io.qameta.allure.Attachment;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.PageFactory;
@@ -11,14 +12,14 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.Random;
 
-public abstract class basePage {
+public abstract class BasePage {
     protected WebDriver driver;
     protected WebDriverWait wait;
     protected Actions actions;
     protected Random random = new Random();
-    protected static final Logger logger = LoggerFactory.getLogger(basePage.class);
+    protected static final Logger logger = LoggerFactory.getLogger(BasePage.class);
 
-    public basePage(WebDriver driver) {
+    public BasePage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(30));
         this.actions = new Actions(driver);
@@ -158,5 +159,10 @@ public abstract class basePage {
 
     protected WebElement waitForVisible(By locator) {
         return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
+
+    @Attachment(value = "Page screenshot", type = "image/png")
+    public byte[] saveScreenshot(WebDriver driver) {
+        return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
     }
 }

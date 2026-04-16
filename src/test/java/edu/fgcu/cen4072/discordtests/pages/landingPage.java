@@ -15,6 +15,7 @@ public class LandingPage extends BasePage {
 
     public LoginPage clickLogin() {
         logger.info("Navigating to login page from landing...");
+        waitForClickable(loginButton);
         clickHumanly(loginButton);
         return new LoginPage(driver);
     }

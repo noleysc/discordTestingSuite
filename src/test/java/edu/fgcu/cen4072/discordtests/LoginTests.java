@@ -17,13 +17,12 @@ public class LoginTests extends BaseTest {
     @Severity(SeverityLevel.BLOCKER)
     public void testValidLogin() {
         if (getDriver().getCurrentUrl().contains("channels/@me")) {
-            logger.info("Already on dashboard, skipping login test.");
+            logger.info("Session already active, skipping login test.");
             return;
         }
         
-        getDriver().get("https://discord.com");
-        LandingPage landing = new LandingPage(getDriver());
-        LoginPage login = landing.clickLogin();
+        getDriver().get("https://discord.com/login");
+        LoginPage login = new LoginPage(getDriver());
         login.login(loginIdentifier, loginPassword);
 
         assertThat(login.isDashboardLoaded())

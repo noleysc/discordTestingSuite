@@ -8,7 +8,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 import java.util.List;
 
-public class dashboardPage extends basePage {
+public class DashboardPage extends BasePage {
 
     @FindBy(css = "nav.guilds__5e434 div.scroller_ef3116, nav[class*='guilds'] div[class*='scrollerBase']")
     private WebElement guildsScroller;
@@ -25,8 +25,18 @@ public class dashboardPage extends basePage {
     @FindBy(css = "button[type='submit']")
     private WebElement submitButton;
 
-    public dashboardPage(WebDriver driver) {
+    public DashboardPage(WebDriver driver) {
         super(driver);
+    }
+
+    public boolean isHydrated() {
+        try {
+            return (Boolean) ((JavascriptExecutor) driver).executeScript(
+                "return document.querySelectorAll('nav.guilds__5e434, [aria-label=\"Servers\"], [class*=\"guilds\"], [class*=\"appAsidePanelWrapper\"]').length > 0"
+            );
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public void ensureHydrated() {
@@ -84,7 +94,7 @@ public class dashboardPage extends basePage {
                             clickHumanly(settings);
                             simulateThinking(2000, 3000);
                             
-                            serverSettingsPage ssp = new serverSettingsPage(driver);
+                            ServerSettingsPage ssp = new ServerSettingsPage(driver);
                             String sName = (String) ((JavascriptExecutor) driver).executeScript("return document.querySelector('header h2') ? document.querySelector('header h2').innerText : 'Unknown';");
                             ssp.deleteServer(sName);
                             serverDeleted = true;
@@ -186,22 +196,40 @@ public class dashboardPage extends basePage {
 
         logger.info("Selecting audience...");
         WebElement audience = null;
-        for (int i = 0; i < 5; i++) {
+        for (int attempt = 0; attempt < 10; attempt++) {
             audience = (WebElement) ((JavascriptExecutor) driver).executeScript(
-                "return Array.from(document.querySelectorAll('button, [role=\"button\"], div[class*=\"container\"]'))" +
-                ".find(el => el.textContent.toLowerCase().includes('for me and my friends') || " +
-                "            el.textContent.toLowerCase().includes('for a club') || " +
-                "            el.textContent.toLowerCase().includes('skip this question') || " +
-                "            el.textContent.toLowerCase().includes('create my own'));"
+                "return Array.from(document.querySelectorAll('button, [role=\"button\"], div[class*=\"container\"], [class*=\"option\"]'))" +
+                ".find(el => {" +
+                "  if (el.offsetParent === null) return false;" +
+                "  const text = el.textContent.toLowerCase();" +
+                "  return (text.includes('for me and my friends') || " +
+                "          text.includes('for a club or community') || " +
+                "          text.includes('skip this question'));" +
+                "});"
             );
-            if (audience != null) break;
-            simulateThinking(500, 1000);
-        }
-        if (audience != null) {
-            clickHumanly(audience);
-            simulateThinking(500, 1000);
-        } else {
-            logger.info("Audience option not found, skipping.");
+            
+            if (audience != null) {
+                logger.info("Found audience option: '{}'. Clicking...", audience.getText());
+                try {
+                    clickHumanly(audience);
+                    simulateThinking(2000, 3000);
+                    
+                    // Check if we advanced to the next screen (naming the server)
+                    boolean advanced = (Boolean) ((JavascriptExecutor) driver).executeScript(
+                        "return document.body.innerText.toLowerCase().includes('customize your server') || " +
+                        "       document.querySelectorAll('input[class*=\"input\"]').length > 0;"
+                    );
+                    if (advanced) {
+                        logger.info("Advanced to server customization screen.");
+                        break;
+                    } else {
+                        logger.warn("Click performed but screen didn't change. Retrying...");
+                    }
+                } catch (Exception e) {
+                    logger.warn("Audience click attempt {} failed: {}", attempt + 1, e.getMessage());
+                }
+            }
+            simulateThinking(1000, 2000);
         }
 
         if (pfpPath != null && !pfpPath.isEmpty()) {
@@ -606,7 +634,20 @@ public class dashboardPage extends basePage {
         }
     }
 
-    public serverSettingsPage openServerSettings(String name) {
+    public ServerSettingsPage openServerSettings(String name) {
+        // Check if we are already in the settings layer
+        Boolean inSettings = (Boolean) ((JavascriptExecutor) driver).executeScript(
+            "return (document.querySelectorAll('[class*=\"standardSidebarView\"], [role=\"tablist\"]').length > 0 && " +
+            "       (document.body.innerText.toLowerCase().includes('overview') || " +
+            "        document.body.innerText.toLowerCase().includes('roles') || " +
+            "        document.body.innerText.toLowerCase().includes('emoji'))) || " +
+            "       window.location.href.includes('settings');"
+        );
+        if (inSettings) {
+            logger.info("Already in Server Settings (or role editor), skipping navigation.");
+            return new ServerSettingsPage(driver);
+        }
+
         logger.info("Selecting server: {}", name);
         WebElement server = (WebElement) ((JavascriptExecutor) driver).executeScript(
             "const nameArg = arguments[0].toLowerCase();" +
@@ -641,18 +682,22 @@ public class dashboardPage extends basePage {
         // Loop to ensure menu opens
         WebElement settings = null;
         for (int i = 0; i < 5; i++) {
-            clickHumanly(header);
-            simulateThinking(800, 1200);
-
+            // Check if menu is ALREADY open
             settings = (WebElement) ((JavascriptExecutor) driver).executeScript(
                 "return document.getElementById('guild-header-popout-settings') || " +
                 "       document.querySelector('[id*=\"settings\"][role=\"menuitem\"]') || " +
                 "       Array.from(document.querySelectorAll('div, [role=\"menuitem\"], span'))" +
-                "       .find(el => el.textContent.toLowerCase().trim() === 'server settings' || el.innerText.toLowerCase().includes('server settings'));"
+                "       .find(el => (el.textContent.toLowerCase().trim() === 'server settings' || el.innerText.toLowerCase().includes('server settings')) && el.offsetParent !== null);"
             );
-            
-            if (settings != null) break;
-            logger.warn("Server Settings menu item not found, retrying header click (attempt {})...", i + 1);
+
+            if (settings != null) {
+                logger.info("Server Settings menu already open.");
+                break;
+            }
+
+            logger.info("Clicking header to open menu (attempt {})...", i + 1);
+            clickHumanly(header);
+            simulateThinking(1000, 1500);
         }
 
         if (settings == null) {
@@ -668,7 +713,7 @@ public class dashboardPage extends basePage {
             "return text.includes('overview') || text.includes('roles') || document.querySelectorAll('[role=\"tab\"]').length > 2;"
         ));
         
-        return new serverSettingsPage(driver);
+        return new ServerSettingsPage(driver);
     }
 
     public void toggleMute() {
@@ -699,7 +744,7 @@ public class dashboardPage extends basePage {
         }
     }
 
-    public userSettingsPage openUserSettings() {
+    public UserSettingsPage openUserSettings() {
         logger.info("Opening User Settings...");
         simulateThinking(1000, 2000);
 
@@ -784,7 +829,7 @@ public class dashboardPage extends basePage {
         }
 
         if (settingsOpened) {
-            return new userSettingsPage(driver);
+            return new UserSettingsPage(driver);
         } else {
             throw new NoSuchElementException("Failed to open User Settings menu using all strategies (Hotkey, Offset, Direct Click).");
         }

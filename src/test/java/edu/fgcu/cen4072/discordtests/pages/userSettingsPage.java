@@ -10,7 +10,7 @@ public class UserSettingsPage extends BasePage {
 
     public UserSettingsPage(WebDriver driver) {
         super(driver);
-        simulateThinking(3000, 5000);
+        simulateThinking(2000, 3000);
         try {
             new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> (Boolean) ((JavascriptExecutor) d).executeScript(
                 "const text = document.body.innerText.toLowerCase();" +
@@ -33,7 +33,7 @@ public class UserSettingsPage extends BasePage {
         );
         if (profilesTab != null) {
             clickHumanly(profilesTab);
-            simulateThinking(1500, 2500);
+            simulateThinking(2000, 3000);
         }
 
         WebElement editBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
@@ -65,6 +65,7 @@ public class UserSettingsPage extends BasePage {
                     nameInput = (WebElement) ((JavascriptExecutor) driver).executeScript(
                         "return document.querySelector('input[name=\"global_name\"]') || " +
                         "       document.querySelector('input[name=\"display_name\"]') || " +
+                        "       document.querySelector('input[class*=\"input__0f084\"]') || " +
                         "       Array.from(document.querySelectorAll('input')).find(el => {" +
                         "         const aria = el.getAttribute('aria-label') || '';" +
                         "         const placeholder = el.placeholder || '';" +
@@ -75,7 +76,7 @@ public class UserSettingsPage extends BasePage {
                         "       });"
                     );
                     if (nameInput != null) break;
-                    simulateThinking(1000, 1500);
+                    simulateThinking(2000, 3000);
                 }
 
                 if (nameInput != null) {
@@ -83,7 +84,7 @@ public class UserSettingsPage extends BasePage {
                     nameInput.sendKeys(Keys.chord(getModifierKey(), "a"), Keys.BACK_SPACE);
                     typeHumanly(nameInput, newName);
                     ((JavascriptExecutor) driver).executeScript("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", nameInput);
-                    simulateThinking(1000, 1500);
+                    simulateThinking(2000, 3000);
                     changed = true;
                 } else {
                     logger.error("Display Name input NOT found after waiting.");
@@ -113,7 +114,7 @@ public class UserSettingsPage extends BasePage {
                         "       });"
                     );
                     if (pronInput != null) break;
-                    simulateThinking(1000, 1500);
+                    simulateThinking(2000, 3000);
                 }
 
                 if (pronInput != null) {
@@ -122,7 +123,7 @@ public class UserSettingsPage extends BasePage {
                     pronInput.sendKeys(Keys.chord(getModifierKey(), "a"), Keys.BACK_SPACE);
                     typeHumanly(pronInput, pronouns);
                     ((JavascriptExecutor) driver).executeScript("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", pronInput);
-                    simulateThinking(1000, 1500);
+                    simulateThinking(2000, 3000);
                     changed = true;
                 } else {
                     logger.error("Pronouns input NOT found after waiting.");
@@ -153,7 +154,7 @@ public class UserSettingsPage extends BasePage {
                 ".find(el => (el.textContent.toLowerCase().includes('change avatar') || el.textContent.toLowerCase().includes('upload avatar')) && el.offsetParent !== null);"
             );
             if (changeAvatarBtn != null) break;
-            simulateThinking(1000, 1500);
+            simulateThinking(2000, 3000);
         }
 
         if (changeAvatarBtn != null) {
@@ -166,7 +167,7 @@ public class UserSettingsPage extends BasePage {
             );
             if (uploadMenuOption != null) {
                 clickHumanly(uploadMenuOption);
-                simulateThinking(1500, 2500);
+                simulateThinking(2000, 3000);
             }
 
             WebElement fileInput = (WebElement) ((JavascriptExecutor) driver).executeScript(
@@ -176,7 +177,7 @@ public class UserSettingsPage extends BasePage {
             if (fileInput != null) {
                 fileInput.sendKeys(filePath);
                 logger.info("File path sent to input. Waiting for cropper...");
-                simulateThinking(4000, 6000);
+                simulateThinking(2000, 3000);
                 
                 WebElement applyBtn = (WebElement) ((JavascriptExecutor) driver).executeScript(
                     "return Array.from(document.querySelectorAll('button'))" +
@@ -184,7 +185,7 @@ public class UserSettingsPage extends BasePage {
                 );
                 if (applyBtn != null) {
                     clickHumanly(applyBtn);
-                    simulateThinking(2000, 4000);
+                    simulateThinking(2000, 3000);
                 }
                 clearOverlays();
             }
@@ -195,7 +196,7 @@ public class UserSettingsPage extends BasePage {
 
     public void saveChanges() {
         logger.info("Attempting to save changes...");
-        simulateThinking(1000, 2000);
+        simulateThinking(2000, 3000);
         
         WebElement saveBtn = null;
         for (int i = 0; i < 10; i++) {
@@ -234,7 +235,7 @@ public class UserSettingsPage extends BasePage {
                 } catch (Exception e) {
                     ((JavascriptExecutor) driver).executeScript("arguments[0].click();", saveBtn);
                 }
-                simulateThinking(3000, 5000);
+                simulateThinking(2000, 3000);
                 Boolean stillExists = (Boolean) ((JavascriptExecutor) driver).executeScript(
                     "return document.body.innerText.toLowerCase().includes('save changes') && document.querySelector('[class*=\"noticeRegion\"]') !== null;"
                 );
@@ -243,7 +244,7 @@ public class UserSettingsPage extends BasePage {
                     return;
                 }
             }
-            simulateThinking(1000, 1500);
+            simulateThinking(2000, 3000);
         }
         logger.warn("Could not confirm changes were saved.");
     }
